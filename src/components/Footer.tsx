@@ -10,7 +10,7 @@ const links = [
 
 export function Footer() {
   return (
-    <footer className={styles.footer} data-section="footer">
+    <footer className={`${styles.footer} rise`} data-section="footer">
       <nav className={styles.nav}>
         {links.map((link) => (
           <a key={link.href} className={styles.link} href={link.href}>
