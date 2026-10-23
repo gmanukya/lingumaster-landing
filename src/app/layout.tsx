@@ -20,7 +20,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="fr">
       <link
         rel="preload"
-        href="/fonts/inter-600.woff2"
+        href="/fonts/inter-var-400-600-opsz-latin.woff2"
         as="font"
         type="font/woff2"
         crossOrigin="anonymous"

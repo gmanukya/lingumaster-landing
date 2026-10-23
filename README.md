@@ -16,4 +16,4 @@ npm run serve
 
 Screen slots are `hero-library`, `shot-library` and `shot-reader`. Until a 1290×2796 capture is added under `src/assets/screens/`, each slot renders a labelled placeholder with `data-placeholder="true"`. There is no price on the page. The App Store badge is an empty slot for the next task.
 
-Inter 400 and 600 are self-hosted subsets in `public/fonts/`. Only the 600 face is preloaded. The Next.js runtime scripts are moved to the window `load` event after the build, so that face and the CSS are not queued behind the framework download. No hosting, analytics, or third-party requests are set up here.
+Inter is one self-hosted variable file in `public/fonts/` (wght 400–600, opsz 14–32). That file is the only font preload. The Next.js runtime scripts are moved to the window `load` event after the build, so the font and the CSS are not queued behind the framework download. No hosting, analytics, or third-party requests are set up here.

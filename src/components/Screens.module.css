@@ -40,10 +40,11 @@
 
   .shot {
     gap: 40px;
-    width: 320px;
+    width: auto;
   }
 
   .caption {
+    max-width: none;
     font-size: 28px;
     line-height: 32px;
     letter-spacing: -0.026em;
