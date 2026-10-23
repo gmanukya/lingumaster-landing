@@ -8,6 +8,7 @@
   "scripts": {
     "prebuild": "node scripts/generate-screens.mjs",
     "build": "NEXT_TELEMETRY_DISABLED=1 next build",
+    "postbuild": "node scripts/defer-runtime.mjs",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "serve": "node scripts/serve.mjs",
