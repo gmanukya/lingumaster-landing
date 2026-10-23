@@ -34,11 +34,15 @@ export class Copy {
     }
 
     const dotted = /^([A-Za-z]+)\.([A-Za-z]+)$/.exec(slot);
-    if (!dotted) return undefined;
-    const key = dotted[1] as keyof typeof copy;
-    const field = dotted[2];
-    const group = copy[key];
-    if (!group || Array.isArray(group)) return undefined;
-    return (group as Record<string, string>)[field];
+    if (dotted) {
+      const key = dotted[1] as keyof typeof copy;
+      const field = dotted[2];
+      const group = copy[key];
+      if (!group || typeof group !== "object" || Array.isArray(group)) return undefined;
+      return (group as Record<string, string>)[field];
+    }
+
+    const value = (copy as Record<string, unknown>)[slot];
+    return typeof value === "string" ? value : undefined;
   }
 }

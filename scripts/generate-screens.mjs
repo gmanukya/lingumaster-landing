@@ -1,7 +1,6 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import sharp from "sharp";
 
 const FORBIDDEN = new Set([
   "11149a34297bf60334715a28492d525e2a50fb74368a02ff2884fa1a184107d6",
@@ -10,19 +9,31 @@ const FORBIDDEN = new Set([
 
 export class ScreenPipeline {
   static root = process.cwd();
+  static sourceDir = path.join(process.cwd(), "src", "assets", "screens");
   static outDir = path.join(process.cwd(), "public", "screens");
-  static screens = [
-    { id: "live1", width: 1242, height: 1568 },
-    { id: "live2", width: 1242, height: 1550 },
-  ];
-  static densities = [1, 2, 3];
-  static baseWidth = 414;
+  static manifestPath = path.join(process.cwd(), "src", "generated", "screens.json");
+  static names = ["hero-library", "shot-library", "shot-reader"];
+  static widths = {
+    "hero-library": [480, 720, 960],
+    "shot-library": [320, 480, 640, 900],
+    "shot-reader": [320, 480, 640, 900],
+  };
+  static sizes = {
+    "hero-library": "(min-width: 1024px) 326px, 232px",
+    "shot-library": "(min-width: 1024px) 296px, 151px",
+    "shot-reader": "(min-width: 1024px) 296px, 151px",
+  };
+  static extensions = [".png", ".jpg", ".jpeg", ".webp", ".avif"];
 
   static hash(file) {
     return crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
   }
 
   static assertAllowed(file) {
+    const base = path.basename(file);
+    if (/^live/i.test(base)) {
+      throw new Error(`${file} uses a live* name`);
+    }
     const digest = ScreenPipeline.hash(file);
     if (FORBIDDEN.has(digest)) {
       throw new Error(`${file} matches a forbidden live3/ss3 hash`);
@@ -30,33 +41,61 @@ export class ScreenPipeline {
     return digest;
   }
 
-  static async build() {
-    fs.mkdirSync(ScreenPipeline.outDir, { recursive: true });
-    for (const screen of ScreenPipeline.screens) {
-      const source = path.join(ScreenPipeline.root, "assets", "screens", `${screen.id}.png`);
-      ScreenPipeline.assertAllowed(source);
-      const meta = await sharp(source).metadata();
-      if (meta.width !== screen.width || meta.height !== screen.height) {
-        throw new Error(
-          `${screen.id} is ${meta.width}x${meta.height}, expected ${screen.width}x${screen.height}`,
-        );
-      }
-      for (const density of ScreenPipeline.densities) {
-        const width = ScreenPipeline.baseWidth * density;
-        const avif = path.join(ScreenPipeline.outDir, `${screen.id}-${density}x.avif`);
-        const webp = path.join(ScreenPipeline.outDir, `${screen.id}-${density}x.webp`);
-        await sharp(source).resize({ width, withoutEnlargement: true }).avif({ quality: 48, effort: 5 }).toFile(avif);
-        await sharp(source)
-          .resize({ width, withoutEnlargement: true })
-          .webp({ quality: 70 })
-          .toFile(webp);
-        for (const file of [avif, webp]) {
-          ScreenPipeline.assertAllowed(file);
-          const rel = path.relative(ScreenPipeline.root, file);
-          console.log(`${rel} ${fs.statSync(file).size} bytes`);
-        }
-      }
+  static sourceFor(name) {
+    if (!fs.existsSync(ScreenPipeline.sourceDir)) return null;
+    for (const ext of ScreenPipeline.extensions) {
+      const file = path.join(ScreenPipeline.sourceDir, `${name}${ext}`);
+      if (fs.existsSync(file) && fs.statSync(file).isFile()) return file;
     }
+    return null;
+  }
+
+  static async build() {
+    fs.rmSync(ScreenPipeline.outDir, { recursive: true, force: true });
+    const manifest = {};
+    let sharp = null;
+    for (const name of ScreenPipeline.names) {
+      const source = ScreenPipeline.sourceFor(name);
+      if (!source) {
+        manifest[name] = null;
+        continue;
+      }
+      ScreenPipeline.assertAllowed(source);
+      sharp ??= (await import("sharp")).default;
+      fs.mkdirSync(ScreenPipeline.outDir, { recursive: true });
+      const meta = await sharp(source).metadata();
+      const width = meta.width ?? 0;
+      const height = meta.height ?? 0;
+      const avif = [];
+      const webp = [];
+      for (const target of ScreenPipeline.widths[name]) {
+        const avifName = `${name}-${target}.avif`;
+        const webpName = `${name}-${target}.webp`;
+        const avifPath = path.join(ScreenPipeline.outDir, avifName);
+        const webpPath = path.join(ScreenPipeline.outDir, webpName);
+        const resize = { width: target, withoutEnlargement: true };
+        await sharp(source).resize(resize).avif({ quality: 50, effort: 5 }).toFile(avifPath);
+        await sharp(source).resize(resize).webp({ quality: 75 }).toFile(webpPath);
+        ScreenPipeline.assertAllowed(avifPath);
+        ScreenPipeline.assertAllowed(webpPath);
+        avif.push(`/screens/${avifName} ${target}w`);
+        webp.push(`/screens/${webpName} ${target}w`);
+      }
+      const largest = ScreenPipeline.widths[name].at(-1);
+      manifest[name] = {
+        src: `/screens/${name}-${largest}.webp`,
+        avifSrcSet: avif.join(", "),
+        webpSrcSet: webp.join(", "),
+        sizes: ScreenPipeline.sizes[name],
+        width,
+        height,
+      };
+      console.log(`${name} ${width}x${height} from ${path.basename(source)}`);
+    }
+    fs.mkdirSync(path.dirname(ScreenPipeline.manifestPath), { recursive: true });
+    fs.writeFileSync(ScreenPipeline.manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+    const ready = ScreenPipeline.names.filter((name) => manifest[name]).length;
+    console.log(`screens: ${ready} capture(s), ${ScreenPipeline.names.length - ready} placeholder(s)`);
   }
 }
 

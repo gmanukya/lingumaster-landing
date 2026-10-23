@@ -30,8 +30,8 @@ export class ScreenGuard {
     let files = 0;
     for (const file of ScreenGuard.walk(root)) {
       files += 1;
-      const base = path.basename(file).toLowerCase();
-      if (/(^|[^a-z0-9])(live3|ss3)([^a-z0-9]|$)/.test(base)) {
+      const base = path.basename(file);
+      if (/^live/i.test(base) || /(^|[^a-z0-9])(live3|ss3)([^a-z0-9]|$)/i.test(base)) {
         hits.push(`name ${path.relative(root, file)}`);
       }
       const digest = ScreenGuard.hash(file);
@@ -39,10 +39,10 @@ export class ScreenGuard {
     }
     if (hits.length > 0) {
       console.error(hits.join("\n"));
-      console.error("screen guard: live3/ss3 found");
+      console.error("screen guard: live* / live3 / ss3 found");
       process.exit(1);
     }
-    console.log(`screen guard: ${files} files checked, live3/ss3 absent`);
+    console.log(`screen guard: ${files} files checked, live* / live3 / ss3 absent`);
   }
 }
 

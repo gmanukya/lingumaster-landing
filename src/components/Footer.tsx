@@ -10,20 +10,26 @@ const links = [
 
 export function Footer() {
   return (
-    <footer className={`${styles.footer} rise`} data-section="footer">
-      <nav className={styles.nav}>
-        {links.map((link) => (
-          <a key={link.href} className={styles.link} href={link.href}>
-            {Copy.text(link.slot)}
-          </a>
-        ))}
-        {SiteConfig.contactHref ? (
-          <a className={styles.link} href={SiteConfig.contactHref}>
-            {Copy.text("footer.contact")}
-          </a>
-        ) : null}
-      </nav>
-      <p className={styles.credit}>{Copy.text("legal.appleCredit")}</p>
+    <footer className={styles.footer}>
+      <div className={`${styles.inner} wrap`}>
+        <ul className={styles.links}>
+          {links.map((link) => (
+            <li key={link.href}>
+              <a className={styles.link} href={link.href}>
+                {Copy.text(link.slot)}
+              </a>
+            </li>
+          ))}
+          {SiteConfig.contactHref ? (
+            <li>
+              <a className={styles.link} href={SiteConfig.contactHref}>
+                {Copy.text("footer.contact")}
+              </a>
+            </li>
+          ) : null}
+        </ul>
+        <p className={styles.credit}>{Copy.text("legal.appleCredit")}</p>
+      </div>
     </footer>
   );
 }

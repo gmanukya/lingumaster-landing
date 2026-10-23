@@ -1,0 +1,46 @@
+/*
+ * Inter 4, SIL OFL, subset to Latin-1 plus U+2019 U+202F U+2026.
+ * Two static faces, each under 25 KB. Only the 600 face is preloaded.
+ * Fallback metrics match each face to Arial (az average 934.51 / 2048),
+ * the same comparison next/font uses. Arimo and Liberation Sans share
+ * those metrics, so they are listed after Arial.
+ */
+@font-face {
+  font-family: Inter;
+  src: url("/fonts/inter-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020-007E, U+00A0-00FF, U+2019, U+2026, U+202F;
+}
+
+@font-face {
+  font-family: Inter;
+  src: url("/fonts/inter-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020-007E, U+00A0-00FF, U+2019, U+2026, U+202F;
+}
+
+@font-face {
+  font-family: "Inter Fallback";
+  src: local("Arial"), local("Arimo"), local("Liberation Sans");
+  font-weight: 400;
+  font-style: normal;
+  size-adjust: 107.89%;
+  ascent-override: 89.79%;
+  descent-override: 22.36%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Inter Fallback";
+  src: local("Arial"), local("Arimo"), local("Liberation Sans");
+  font-weight: 600;
+  font-style: normal;
+  size-adjust: 110.2%;
+  ascent-override: 87.91%;
+  descent-override: 21.89%;
+  line-gap-override: 0%;
+}

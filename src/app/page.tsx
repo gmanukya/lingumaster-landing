@@ -1,26 +1,27 @@
-import { PageShell } from "@/components/PageShell";
 import { Hero } from "@/components/Hero";
 import { Benefits } from "@/components/Benefits";
 import { Screens } from "@/components/Screens";
-import { TrustLine } from "@/components/TrustLine";
 import { FinalCta } from "@/components/FinalCta";
+import { PageShell } from "@/components/PageShell";
 import { ScreenAssets } from "@/lib/ScreenAssets";
 
 export default function HomePage() {
+  const hero = ScreenAssets.asset("hero-library");
   return (
     <PageShell>
-      <link
-        rel="preload"
-        as="image"
-        imageSrcSet={ScreenAssets.srcSet("live1", "avif")}
-        imageSizes={ScreenAssets.heroSizes}
-        type="image/avif"
-        fetchPriority="high"
-      />
+      {hero ? (
+        <link
+          rel="preload"
+          as="image"
+          imageSrcSet={hero.avifSrcSet}
+          imageSizes={hero.sizes}
+          type="image/avif"
+          fetchPriority="high"
+        />
+      ) : null}
       <Hero />
       <Benefits />
       <Screens />
-      <TrustLine />
       <FinalCta />
     </PageShell>
   );

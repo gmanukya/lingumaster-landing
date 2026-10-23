@@ -1,18 +1,22 @@
 import { Copy } from "@/content/Copy";
 import { SiteConfig } from "@/config";
-import { PriceLine } from "./PriceLine";
 import { StoreBadge } from "./StoreBadge";
 import styles from "./FinalCta.module.css";
 
 export function FinalCta() {
   return (
-    <section className={`${styles.section} rise`} data-section="final-cta">
-      <h2 className={styles.title}>{Copy.text("finalCta.headline")}</h2>
-      <div className={styles.row}>
-        <p className={styles.label}>{Copy.text("finalCta.ctaLabel")}</p>
-        {SiteConfig.finalCta === "badge" ? <StoreBadge placement="final" /> : null}
+    <section className={styles.final} aria-labelledby="final-title">
+      <div className={`${styles.inner} wrap`}>
+        <h2 id="final-title" className={styles.title}>
+          {Copy.text("finalCta.headline")}
+        </h2>
+        <p className={styles.label}>{Copy.text("finalCta.label")}</p>
+        {SiteConfig.finalCta === "badge" ? (
+          <div className={styles.badge}>
+            <StoreBadge placement="final" />
+          </div>
+        ) : null}
       </div>
-      <PriceLine />
     </section>
   );
 }

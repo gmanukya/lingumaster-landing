@@ -1,29 +1,31 @@
 import { Copy } from "@/content/Copy";
-import { ScreenAssets } from "@/lib/ScreenAssets";
-import { ScreenImage } from "./ScreenImage";
+import { Headline } from "@/lib/Headline";
+import { Screen } from "./Screen";
 import { StoreBadge } from "./StoreBadge";
 import styles from "./Hero.module.css";
 
 export function Hero() {
+  const headline = Copy.text("hero.headline");
+  const parts = Headline.split(headline);
+
   return (
-    <section className={`${styles.hero} rise`} data-section="hero" aria-labelledby="hero-title">
-      <div className={styles.copy}>
-        <h1 id="hero-title" className={styles.title}>
-          {Copy.text("hero.headline")}
-        </h1>
-        <p className={styles.sub}>{Copy.text("hero.subline")}</p>
-        <div className={styles.cta}>
-          <p className={styles.label}>{Copy.text("hero.ctaLabel")}</p>
-          <StoreBadge placement="hero" />
-        </div>
-        <p className={styles.micro}>{Copy.text("hero.microcopy")}</p>
+    <section className={`${styles.hero} wrap`} aria-labelledby="hero-title">
+      <h1 id="hero-title" className={styles.title}>
+        {parts.tail ? (
+          <>
+            {parts.head} <span className="nw">{parts.tail}</span>
+          </>
+        ) : (
+          headline
+        )}
+      </h1>
+      <p className={styles.sub}>{Copy.text("hero.subline")}</p>
+      <div className={styles.badge}>
+        <StoreBadge placement="hero" />
       </div>
-      <ScreenImage
-        id="live1"
-        altSlot="captures[0].alt"
-        sizes={ScreenAssets.heroSizes}
-        priority
-      />
+      <div className={styles.stage}>
+        <Screen name="hero-library" variant="hero" priority />
+      </div>
     </section>
   );
 }

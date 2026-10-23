@@ -18,6 +18,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="fr">
+      <link
+        rel="preload"
+        href="/fonts/inter-600.woff2"
+        as="font"
+        type="font/woff2"
+        crossOrigin="anonymous"
+      />
       <body data-draft={Copy.isDraft() ? "true" : "false"}>
         <DraftRibbon />
         {children}

@@ -1,0 +1,34 @@
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  background: var(--bg);
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 8px;
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 24px;
+  letter-spacing: -0.022em;
+  text-decoration: none;
+}
+
+.wordmark:link,
+.wordmark:visited,
+.wordmark:hover,
+.wordmark:active {
+  color: var(--text);
+  text-decoration: none;
+}
+
+@media (min-width: 1024px) {
+  .bar {
+    height: 64px;
+  }
+}

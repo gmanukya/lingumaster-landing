@@ -1,0 +1,212 @@
+.device {
+  --w: 250px;
+  position: relative;
+  isolation: isolate;
+  flex: none;
+  width: var(--w);
+  border-radius: calc(var(--w) * 0.172);
+  padding: calc(var(--w) * 0.011);
+  background: linear-gradient(155deg, #6c6c71 0%, #2c2c2f 13%, #1d1d1f 48%, #2c2c2f 87%, #5a5a5e 100%);
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.55),
+    0 1px 2px rgba(0, 0, 0, 0.08),
+    0 8px 16px -4px rgba(0, 0, 0, 0.08),
+    0 24px 48px -12px rgba(0, 0, 0, 0.16);
+}
+
+.device::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 6%;
+  right: 6%;
+  bottom: -7%;
+  height: 18%;
+  background: radial-gradient(
+    50% 50% at 50% 50%,
+    rgba(0, 0, 0, 0.16) 0%,
+    rgba(0, 0, 0, 0.06) 55%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  pointer-events: none;
+}
+
+.hero {
+  --w: 250px;
+}
+
+.shot {
+  --w: min(163px, calc((100vw - 64px) / 2));
+}
+
+.onDark::before {
+  display: none;
+}
+
+.onDark {
+  background: linear-gradient(155deg, #8a8a8f 0%, #3a3a3d 13%, #242426 48%, #3a3a3d 87%, #77777b 100%);
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.14), 0 40px 80px -24px rgba(0, 0, 0, 0.9);
+}
+
+.bezel {
+  border-radius: calc(var(--w) * 0.161);
+  background: #050505;
+  padding: calc(var(--w) * 0.026);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.screen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--w) * 0.032);
+  width: 100%;
+  aspect-ratio: 1290 / 2796;
+  padding: 0 15%;
+  overflow: hidden;
+  border-radius: calc(var(--w) * 0.135);
+  background: linear-gradient(180deg, var(--ph-top) 0%, var(--ph-bottom) 100%);
+  text-align: center;
+}
+
+.screen::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: calc(var(--w) * 0.04);
+  left: 50%;
+  width: calc(var(--w) * 0.29);
+  height: calc(var(--w) * 0.085);
+  border-radius: 99px;
+  background: #000;
+  transform: translateX(-50%);
+}
+
+.screen::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0) 38%);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+.onDark .screen {
+  background: linear-gradient(180deg, var(--ph-dark-top) 0%, var(--ph-dark-bottom) 100%);
+}
+
+.onDark .screen::after {
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0) 38%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.filled {
+  padding: 0;
+  background: #000;
+}
+
+.measure {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.picture {
+  position: absolute;
+  inset: 0;
+}
+
+.photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0;
+}
+
+.glyph {
+  position: relative;
+  z-index: 1;
+  width: calc(var(--w) * 0.12);
+  height: auto;
+  color: var(--ph-icon);
+}
+
+.onDark .glyph {
+  color: var(--ph-icon-dark);
+}
+
+.phTitle,
+.phCaption {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+}
+
+.phTitle {
+  color: var(--ph-title);
+  font-size: clamp(11px, calc(var(--w) * 0.052), 14px);
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.phCaption {
+  color: var(--ph-caption);
+  font-size: clamp(10.5px, calc(var(--w) * 0.045), 12.5px);
+  line-height: 1.35;
+}
+
+.onDark .phTitle {
+  color: var(--ph-dark-title);
+}
+
+.onDark .phCaption {
+  color: var(--ph-dark-caption);
+}
+
+.button {
+  position: absolute;
+  width: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #3b3b3e, #1f1f21);
+}
+
+.b1 {
+  left: -2px;
+  top: 17%;
+  height: 4.2%;
+}
+
+.b2 {
+  left: -2px;
+  top: 25%;
+  height: 8.5%;
+}
+
+.b3 {
+  left: -2px;
+  top: 35.5%;
+  height: 8.5%;
+}
+
+.b4 {
+  right: -2px;
+  top: 28%;
+  height: 13%;
+}
+
+@media (min-width: 1024px) {
+  .hero {
+    --w: 352px;
+  }
+
+  .shot {
+    --w: 320px;
+  }
+}

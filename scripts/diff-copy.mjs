@@ -2,7 +2,9 @@ import fs from "node:fs";
 import path from "node:path";
 
 const SLOT_ORDER = {
-  Hero: ["hero.headline", "hero.subline", "hero.ctaLabel", "hero.microcopy"],
+  Header: ["wordmark"],
+  Hero: ["hero.headline", "hero.subline"],
+  Badge: ["badge.ariaLabel"],
   "3 bénéfices": [
     "benefits[0].title",
     "benefits[0].line",
@@ -11,14 +13,15 @@ const SLOT_ORDER = {
     "benefits[2].title",
     "benefits[2].line",
   ],
+  "Titres masqués": ["headings.benefits", "headings.captures"],
   "Légendes des captures": [
     "captures[0].caption",
     "captures[1].caption",
     "captures[1].variant",
   ],
+  "Alt text des écrans": ["hero.imageAlt", "captures[0].alt", "captures[1].alt"],
   "Ligne de confiance (optionnelle)": ["trust.line"],
-  "CTA final": ["finalCta.headline", "finalCta.ctaLabel"],
-  Prix: ["price.line"],
+  "CTA final": ["finalCta.headline", "finalCta.label"],
   Footer: [
     "footer.privacy",
     "footer.terms",

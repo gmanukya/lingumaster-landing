@@ -1,23 +1,30 @@
 import { Copy } from "@/content/Copy";
-import { ScreenAssets, type ScreenId } from "@/lib/ScreenAssets";
-import { ScreenImage } from "./ScreenImage";
+import type { ScreenName } from "@/lib/ScreenAssets";
+import { Screen } from "./Screen";
+import { TrustLine } from "./TrustLine";
 import styles from "./Screens.module.css";
 
-const shots: { id: ScreenId; caption: string; alt: string }[] = [
-  { id: "live1", caption: "captures[0].caption", alt: "captures[0].alt" },
-  { id: "live2", caption: "captures[1].caption", alt: "captures[1].alt" },
+const shots: { name: ScreenName; caption: string }[] = [
+  { name: "shot-library", caption: "captures[0].caption" },
+  { name: "shot-reader", caption: "captures[1].caption" },
 ];
 
 export function Screens() {
   return (
-    <section className="rise" data-section="screens">
-      <div className={styles.strip}>
-        {shots.map((shot) => (
-          <figure key={shot.id} className={styles.figure}>
-            <ScreenImage id={shot.id} altSlot={shot.alt} sizes={ScreenAssets.stripSizes} />
-            <figcaption className={styles.caption}>{Copy.text(shot.caption)}</figcaption>
-          </figure>
-        ))}
+    <section className={styles.dark} aria-labelledby="captures-title">
+      <div className="wrap">
+        <h2 id="captures-title" className="vh">
+          {Copy.text("headings.captures")}
+        </h2>
+        <div className={styles.pair}>
+          {shots.map((shot) => (
+            <figure key={shot.name} className={styles.shot}>
+              <Screen name={shot.name} variant="shot" onDark />
+              <figcaption className={styles.caption}>{Copy.text(shot.caption)}</figcaption>
+            </figure>
+          ))}
+        </div>
+        <TrustLine />
       </div>
     </section>
   );
