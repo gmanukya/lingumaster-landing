@@ -1,0 +1,26 @@
+.strip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+}
+
+.figure {
+  margin: 0;
+  min-width: 0;
+}
+
+.caption {
+  margin: var(--space-3) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-small);
+  line-height: var(--line-small);
+  text-align: center;
+}
+
+@media (min-width: 1024px) {
+  .strip {
+    gap: var(--space-6);
+  }
+}

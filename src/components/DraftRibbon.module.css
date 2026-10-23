@@ -1,0 +1,18 @@
+.ribbon {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  height: var(--ribbon-height);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-accent-text);
+  color: var(--color-on-accent);
+  font-size: var(--font-small);
+  font-weight: 700;
+  line-height: var(--line-small);
+  letter-spacing: 0.08em;
+}

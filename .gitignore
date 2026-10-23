@@ -1,0 +1,7 @@
+node_modules
+.next
+out
+public/screens
+*.tsbuildinfo
+npm-debug.log*
+.DS_Store

@@ -1,0 +1,73 @@
+@import "../styles/tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--font-body);
+  line-height: var(--line-body);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+body[data-draft="true"] {
+  padding-top: var(--ribbon-height);
+}
+
+h1,
+h2,
+p {
+  text-wrap: balance;
+}
+
+a {
+  color: var(--color-accent-text);
+  text-underline-offset: 3px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--color-accent-text);
+  outline-offset: 3px;
+}
+
+img {
+  max-width: 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .rise {
+    animation: rise 200ms ease-out both;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

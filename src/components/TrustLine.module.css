@@ -1,0 +1,6 @@
+.trust {
+  margin: 0 auto;
+  max-width: var(--measure);
+  color: var(--color-text-secondary);
+  text-align: center;
+}

@@ -1,0 +1,13 @@
+.frame {
+  background: var(--color-accent-tint);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+}
+
+.img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 16px 40px rgb(17 17 17 / 12%);
+}

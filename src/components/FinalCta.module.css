@@ -1,0 +1,39 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  max-width: var(--measure);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-h2);
+  font-weight: 700;
+  line-height: var(--line-h2);
+  letter-spacing: -0.02em;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.label {
+  margin: 0;
+  font-weight: 600;
+}
+
+@media (min-width: 1024px) {
+  .section {
+    align-items: center;
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  .row {
+    justify-content: center;
+  }
+}

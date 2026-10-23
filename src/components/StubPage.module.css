@@ -1,0 +1,18 @@
+.stub {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: var(--measure);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-h1);
+  font-weight: 700;
+  line-height: var(--line-h1);
+  letter-spacing: -0.02em;
+}
+
+.body {
+  margin: 0;
+}

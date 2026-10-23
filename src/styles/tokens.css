@@ -1,0 +1,60 @@
+:root {
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --color-bg: #ffffff;
+  --color-bg-subtle: #f6f6f4;
+  --color-text: #111111;
+  --color-text-secondary: #5c5c5c;
+  --color-hairline: #e6e6e3;
+  --color-accent: #88b290;
+  --color-accent-text: #3e7a4e;
+  /* Accent washed over white. Used only behind screenshots. */
+  --color-accent-tint: #eaf1eb;
+  --color-on-accent: #ffffff;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+  --space-10: 128px;
+
+  --radius-sm: 12px;
+  --radius-lg: 24px;
+
+  --font-h1: 40px;
+  --line-h1: 44px;
+  --font-h2: 32px;
+  --line-h2: 38px;
+  --font-title: 22px;
+  --line-title: 28px;
+  --font-body: 17px;
+  --line-body: 26px;
+  --font-small: 14px;
+  --line-small: 20px;
+
+  --content: 1120px;
+  --pad: 24px;
+  --section-gap: 64px;
+  --measure: 60ch;
+  --ribbon-height: 28px;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --font-h1: 64px;
+    --line-h1: 68px;
+    --font-h2: 48px;
+    --line-h2: 52px;
+    --section-gap: 128px;
+  }
+}
+
+/*
+ * D8 is open. A dark theme is one override block on the variables above.
+ * It stays off until Gor asks for it.
+ */
