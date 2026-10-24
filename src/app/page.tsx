@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@/components/Analytics";
 import { Hero } from "@/components/Hero";
 import { Benefits } from "@/components/Benefits";
 import { Screens } from "@/components/Screens";
@@ -25,6 +26,7 @@ export default function HomePage() {
           fetchPriority="high"
         />
       ) : null}
+      <Analytics />
       <Hero />
       <Benefits />
       <Screens />
