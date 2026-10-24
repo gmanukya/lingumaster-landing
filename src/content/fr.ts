@@ -1,5 +1,4 @@
-export const COPY_STATUS: "draft:copy-new-v1" | "approved" =
-  "draft:copy-new-v1";
+export const COPY_STATUS: "draft:copy-new-v1" | "approved" = "approved";
 
 export const DRAFT_LABEL = "BROUILLON";
 

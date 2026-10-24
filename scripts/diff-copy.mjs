@@ -77,7 +77,7 @@ export class CopyDiff {
     const file = path.join(CopyDiff.root, "src", "content", "fr.ts");
     const source = fs.readFileSync(file, "utf8");
     const status = source.match(/COPY_STATUS(?:\s*:\s*[^=]+)?=\s*"([^"]+)"/);
-    if (!status || status[1] !== "draft:copy-new-v1") {
+    if (!status || status[1] !== "approved") {
       throw new Error(`COPY_STATUS is ${status ? status[1] : "missing"}`);
     }
     const body = source.match(/export const copy = (\{[\s\S]*\}) as const;/);

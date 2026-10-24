@@ -5,8 +5,8 @@ export class Copy {
     return COPY_STATUS;
   }
 
-  static isDraft(): boolean {
-    return COPY_STATUS !== "approved";
+  static isDraft(status: typeof COPY_STATUS = COPY_STATUS): boolean {
+    return status !== "approved";
   }
 
   static present(slot: string): boolean {
