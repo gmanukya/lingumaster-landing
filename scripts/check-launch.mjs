@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { CaptureGates } from "./launch-gates.mjs";
 
 /**
@@ -27,6 +28,8 @@ export class LaunchCheck {
   ];
   static screenNames = ["hero-reader", "shot-library", "shot-reader"];
   static ogMark = "placeholder\0check:launch";
+  static ogPlaceholderHash = "8815fccb0cfd3478a7731b3854defb58da9a2c691e51816a031751f8776e4cbc";
+  static ogHashFile = path.resolve("src/assets/og/og-1200x630.png.sha256");
 
   static walk(dir, found = [], extensions = null) {
     if (!fs.existsSync(dir)) return found;
@@ -125,14 +128,29 @@ export class LaunchCheck {
     return hits;
   }
 
+  static designerOgHash() {
+    if (!fs.existsSync(LaunchCheck.ogHashFile)) return "";
+    const hash = fs.readFileSync(LaunchCheck.ogHashFile, "utf8").trim().split(/\s+/)[0] ?? "";
+    return /^[a-f0-9]{64}$/.test(hash) ? hash : "";
+  }
+
+  static ogProblems(bytes, rel = "og.png") {
+    const digest = crypto.createHash("sha256").update(bytes).digest("hex");
+    if (bytes.includes(LaunchCheck.ogMark) || digest === LaunchCheck.ogPlaceholderHash) {
+      return [`og: ${rel} is the temporary placeholder`];
+    }
+    const expected = LaunchCheck.designerOgHash();
+    if (!expected) return ["og: Designer sha256 sidecar is missing"];
+    if (digest !== expected) return [`og: ${rel} sha256 ${digest} does not match ${expected}`];
+    return [];
+  }
+
   static og() {
     const file = fs.existsSync(path.resolve("out/og.png"))
       ? path.resolve("out/og.png")
       : path.resolve("public/og.png");
     if (!fs.existsSync(file)) return ["og: image is missing"];
-    const bytes = fs.readFileSync(file);
-    if (bytes.includes(LaunchCheck.ogMark)) return [`og: ${LaunchCheck.rel(file)} is the temporary placeholder`];
-    return [];
+    return LaunchCheck.ogProblems(fs.readFileSync(file), LaunchCheck.rel(file));
   }
 
   static prices() {
@@ -476,6 +494,9 @@ function rootsFromArgv(argv) {
   return { roots: [path.resolve(root)], project: false };
 }
 
-const { roots, project } = rootsFromArgv(process.argv.slice(2));
-if (!roots) process.exit(1);
-process.exit(await LaunchCheck.run(roots, project));
+const invoked = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (invoked) {
+  const { roots, project } = rootsFromArgv(process.argv.slice(2));
+  if (!roots) process.exit(1);
+  process.exit(await LaunchCheck.run(roots, project));
+}

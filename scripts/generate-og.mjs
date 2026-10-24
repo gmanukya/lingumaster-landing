@@ -1,77 +1,56 @@
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import sharp from "sharp";
 
-/** Temporary share image: the wordmark on bg, flagged for check:launch. */
-export class OgPlaceholder {
+/** Copies the Designer OG bytes. Does not resize or re-encode. */
+export class OgImage {
+  static master = path.resolve("src/assets/og/og-1200x630.png");
+  static hashFile = path.resolve("src/assets/og/og-1200x630.png.sha256");
   static dest = path.resolve("public/og.png");
   static width = 1200;
   static height = 630;
-  static mark = "placeholder\0check:launch";
+  static placeholderMark = "placeholder\0check:launch";
+  static placeholderHash = "8815fccb0cfd3478a7731b3854defb58da9a2c691e51816a031751f8776e4cbc";
 
-  static wordmark() {
-    const source = fs.readFileSync(path.resolve("src/content/fr.ts"), "utf8");
-    const match = source.match(/wordmark:\s*"([^"]+)"/);
-    if (!match) throw new Error("wordmark missing from src/content/fr.ts");
-    return match[1];
-  }
-
-  static svg(text) {
-    const safe = text
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;");
-    return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${OgPlaceholder.width}" height="${OgPlaceholder.height}" viewBox="0 0 ${OgPlaceholder.width} ${OgPlaceholder.height}">
-  <rect width="100%" height="100%" fill="#ffffff"/>
-  <text x="600" y="345" text-anchor="middle" font-family="Inter, sans-serif" font-weight="600" font-size="92" fill="#1d1d1f">${safe}</text>
-</svg>`;
-  }
-
-  static crc32(buffer) {
-    let crc = 0xffffffff;
-    for (const byte of buffer) {
-      crc ^= byte;
-      for (let bit = 0; bit < 8; bit += 1) {
-        crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
-      }
+  static recorded() {
+    const hash = fs.readFileSync(OgImage.hashFile, "utf8").trim().split(/\s+/)[0] ?? "";
+    if (!/^[a-f0-9]{64}$/.test(hash)) {
+      throw new Error(`og sha256 file is not a 64-character hex digest: ${OgImage.hashFile}`);
     }
-    return (~crc) >>> 0;
+    return hash;
   }
 
-  static textChunk(keyword, value) {
-    const data = Buffer.from(`${keyword}\0${value}`, "latin1");
-    const type = Buffer.from("tEXt");
-    const length = Buffer.alloc(4);
-    length.writeUInt32BE(data.length, 0);
-    const crc = Buffer.alloc(4);
-    crc.writeUInt32BE(OgPlaceholder.crc32(Buffer.concat([type, data])), 0);
-    return Buffer.concat([length, type, data, crc]);
+  static digest(bytes) {
+    return crypto.createHash("sha256").update(bytes).digest("hex");
   }
 
-  static markPng(png) {
-    const end = png.lastIndexOf(Buffer.from("IEND"));
-    if (end < 4) throw new Error("PNG IEND missing");
-    const at = end - 4;
-    const chunk = OgPlaceholder.textChunk("placeholder", "check:launch");
-    return Buffer.concat([png.subarray(0, at), chunk, png.subarray(at)]);
-  }
-
-  static async build() {
-    const text = OgPlaceholder.wordmark();
-    const rendered = await sharp(Buffer.from(OgPlaceholder.svg(text)))
-      .resize(OgPlaceholder.width, OgPlaceholder.height)
-      .png()
-      .toBuffer();
-    const meta = await sharp(rendered).metadata();
-    if (meta.width !== OgPlaceholder.width || meta.height !== OgPlaceholder.height) {
-      throw new Error(`og image is ${meta.width}x${meta.height}`);
+  static dimensions(png) {
+    const ihdr = png.subarray(12, 16).toString("ascii");
+    if (png.length < 24 || png.subarray(0, 8).toString("hex") !== "89504e470d0a1a0a" || ihdr !== "IHDR") {
+      throw new Error("og master is not a PNG");
     }
-    const marked = OgPlaceholder.markPng(rendered);
-    if (!marked.includes(OgPlaceholder.mark)) throw new Error("og placeholder mark missing");
-    fs.writeFileSync(OgPlaceholder.dest, marked);
-    console.log(`og: ${OgPlaceholder.width}x${OgPlaceholder.height} placeholder ${OgPlaceholder.dest}`);
+    return { width: png.readUInt32BE(16), height: png.readUInt32BE(20) };
+  }
+
+  static install() {
+    const bytes = fs.readFileSync(OgImage.master);
+    const expected = OgImage.recorded();
+    const actual = OgImage.digest(bytes);
+    if (actual !== expected) {
+      throw new Error(`og hash mismatch\n  expected ${expected}\n  actual   ${actual}`);
+    }
+    if (bytes.includes(OgImage.placeholderMark) || actual === OgImage.placeholderHash) {
+      throw new Error("og master is the temporary placeholder");
+    }
+    const { width, height } = OgImage.dimensions(bytes);
+    if (width !== OgImage.width || height !== OgImage.height) {
+      throw new Error(`og image is ${width}x${height}`);
+    }
+    fs.copyFileSync(OgImage.master, OgImage.dest);
+    const copied = fs.readFileSync(OgImage.dest);
+    if (!copied.equals(bytes)) throw new Error("og copy changed bytes");
+    console.log(`og: ${width}x${height} ${actual} ${OgImage.dest}`);
   }
 }
 
-await OgPlaceholder.build();
+await OgImage.install();

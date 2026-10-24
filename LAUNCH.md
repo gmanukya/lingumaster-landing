@@ -2,7 +2,7 @@
 
 Human steps only. Agents do not buy the domain, touch Netlify, change DNS, deploy, or tick these boxes. Nothing below is done.
 
-The build can be checked locally. `npm run check:launch` stays red until every gate in task (e) item 6 is true. Approved copy does not make the page launchable. The three cleaned captures are in the build and still provisional: `CAPTURES.md` has no Designer sign-off and no Gor approval, so each image carries `data-provisional="true"`. The OG image is still the temporary wordmark.
+The build can be checked locally. `npm run check:launch` stays red until every gate in task (e) item 6 is true. Approved copy does not make the page launchable. The three cleaned captures are in the build and still provisional: `CAPTURES.md` has no Designer sign-off and no Gor approval, so each image carries `data-provisional="true"`. The OG image is the Designer file `src/assets/og/og-1200x630.png` (sha256 `69a74e43310f5346b0ccbeb100a3224ac8ce27931c62838596e0124f305e08ab`). The wordmark placeholder still fails `check:launch`.
 
 The 404 page still renders `[copy: notFound.title]` and `[copy: notFound.body]`. Those slots are not in the approved copy. The Writer supplies them. The gate fails on that HTML until then.
 
@@ -11,7 +11,7 @@ The 404 page still renders `[copy: notFound.title]` and `[copy: notFound.body]`.
 Gor supplied the captures on 24 Oct 2026. The three cleaned files are exported. What is left is human:
 
 - [ ] Designer: sign off `shot6-clean.png`, `shot9-library-clean.png` and `shot7-clean.png` in `src/assets/screens/CAPTURES.md` (`provisional: no`, name and date).
-- [ ] Designer: make the OG image once the three captures are final, and drop the `placeholder` / `check:launch` mark on `public/og.png`.
+- Designer OG, 24 Oct 2026: `src/assets/og/og-1200x630.png` is served as `https://lingumaster.app/og.png`. The temporary wordmark is not.
 - [ ] Writer: re-check the alt texts and the Capture 1 caption against the final images.
 - [ ] Gor: approve the final three through the CEO. The approval reference goes in `CAPTURES.md`.
 - [ ] Date and person:

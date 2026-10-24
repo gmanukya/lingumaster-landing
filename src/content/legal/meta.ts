@@ -23,7 +23,7 @@ export function legalPage(slug: LegalSlug): { doc: LegalModel; metadata: Metadat
       card: "summary_large_image",
       title: doc.title,
       description: doc.title,
-      images: [ogImage],
+      images: [{ url: ogImage, alt: Copy.text("meta.ogTitle") }],
     },
   };
   if (doc.robots) metadata.robots = doc.robots;

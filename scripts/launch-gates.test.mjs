@@ -7,6 +7,7 @@ import { spawnSync } from "node:child_process";
 import test from "node:test";
 import { BandCheck } from "./band-check.mjs";
 import { RAW_HASHES } from "./capture-slots.mjs";
+import { LaunchCheck } from "./check-launch.mjs";
 import { CaptureGates } from "./launch-gates.mjs";
 
 const fixtures = path.resolve("scripts/fixtures");
@@ -78,4 +79,30 @@ test("Designer sign-off is recorded and provisional rows still block launch", ()
   assert.ok(hits.some((hit) => hit.includes("shot-library") && hit.includes("provisional: yes")));
   assert.ok(hits.some((hit) => hit.includes("shot-reader") && hit.includes("Gor approval")));
   assert.equal(hits.some((hit) => hit.includes("Designer sign-off is empty")), false);
+});
+
+test("the Designer OG passes and the temporary wordmark fails", () => {
+  const designerHash = "69a74e43310f5346b0ccbeb100a3224ac8ce27931c62838596e0124f305e08ab";
+  const master = fs.readFileSync(path.resolve("src/assets/og/og-1200x630.png"));
+  const sidecar = fs.readFileSync(path.resolve("src/assets/og/og-1200x630.png.sha256"), "utf8").trim().split(/\s+/)[0];
+  const note = fs.readFileSync(path.resolve("src/assets/og/OG.md"), "utf8");
+  assert.equal(crypto.createHash("sha256").update(master).digest("hex"), designerHash);
+  assert.equal(sidecar, designerHash);
+  assert.equal(LaunchCheck.designerOgHash(), designerHash);
+  assert.match(note, new RegExp(designerHash));
+  assert.equal(master.readUInt32BE(16), 1200);
+  assert.equal(master.readUInt32BE(20), 630);
+  assert.deepEqual(LaunchCheck.ogProblems(master, "out/og.png"), []);
+
+  const placeholder = fs.readFileSync(path.join(fixtures, "og/placeholder.png"));
+  assert.equal(crypto.createHash("sha256").update(placeholder).digest("hex"), LaunchCheck.ogPlaceholderHash);
+  assert.match(LaunchCheck.ogProblems(placeholder, "out/og.png")[0], /temporary placeholder/);
+
+  const marked = Buffer.concat([master, Buffer.from("placeholder\0check:launch")]);
+  assert.match(LaunchCheck.ogProblems(marked, "out/og.png")[0], /temporary placeholder/);
+
+  const changed = Buffer.from("not-the-designer-image");
+  const changedHit = LaunchCheck.ogProblems(changed, "out/og.png")[0];
+  assert.match(changedHit, /does not match/);
+  assert.match(changedHit, new RegExp(designerHash));
 });
