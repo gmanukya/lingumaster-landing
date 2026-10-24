@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Copy } from "@/content/Copy";
 import { DraftRibbon } from "@/components/DraftRibbon";
+import { campaignInlineScript } from "@/lib/campaign";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -26,6 +27,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         crossOrigin="anonymous"
       />
       <body data-draft={Copy.isDraft() ? "true" : "false"}>
+        <script
+          id="campaign-ct"
+          dangerouslySetInnerHTML={{ __html: campaignInlineScript() }}
+        />
         <DraftRibbon />
         {children}
       </body>

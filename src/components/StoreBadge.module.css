@@ -1,18 +1,27 @@
-.slot {
+.badge {
   display: block;
+  width: 171px;
   height: 54px;
-  aspect-ratio: 126.5 / 40;
-  flex: none;
+  line-height: 0;
+  font-size: 0;
 }
 
-.slot:focus-visible {
+.badge img {
+  width: 171px;
+  height: 54px;
+  max-width: none;
+}
+
+.badge:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 4px;
   border-radius: 12px;
 }
 
 @media (min-width: 1024px) {
-  .slot {
+  .badge,
+  .badge img {
+    width: 177px;
     height: 56px;
   }
 }

@@ -30,6 +30,13 @@
   margin-top: 16px;
 }
 
+.textLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: inherit;
+}
+
 @media (min-width: 768px) {
   .title {
     max-width: 600px;
