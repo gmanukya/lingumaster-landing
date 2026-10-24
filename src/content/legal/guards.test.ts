@@ -43,9 +43,14 @@ test("publisher name is a single constant", () => {
   assert.deepEqual(hits, []);
 });
 
-test("footer uses the publisher constant and approved copy still hides its own chip", () => {
+test("the footer is the Apple credit only and has nothing focusable", () => {
   const footer = fs.readFileSync(path.resolve("src/components/Footer.tsx"), "utf8");
-  assert.match(footer, /PUBLISHER_NAME/);
+  assert.match(footer, /legal\.appleCredit/);
+  assert.equal(footer.includes("<a"), false);
+  assert.equal(footer.includes("href"), false);
+  assert.equal(footer.includes("<button"), false);
+  assert.equal(footer.includes("tabIndex"), false);
+  assert.equal(footer.includes("PUBLISHER_NAME"), false);
   assert.equal(Copy.status(), "approved");
   assert.equal(Copy.isDraft(), false);
 });

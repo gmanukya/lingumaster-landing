@@ -67,11 +67,15 @@ test("the published raw shot2 hash is denied, and a file with a listed hash fail
   assert.ok(hits.some((hit) => hit.includes("shot2") && hit.includes("renamed.png")));
 });
 
-test("a provisional CAPTURES row is not signed off", () => {
+test("Designer sign-off is recorded and provisional rows still block launch", () => {
   const markdown = fs.readFileSync(path.resolve("src/assets/screens/CAPTURES.md"), "utf8");
-  assert.match(markdown, /\| yes \|/);
+  const signoff = "Designer PASS, 24 Oct 2026, PR #5 fadd7b4: sha256 = master, band blank, uncropped, slot correct";
+  for (const slot of ["hero-reader", "shot-library", "shot-reader"]) {
+    assert.match(markdown, new RegExp(`\\| ${slot} \\|[^\\n]*\\| yes \\| ${signoff.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} \\|`));
+  }
   const hits = CaptureGates.signoffProblems();
   assert.ok(hits.some((hit) => hit.includes("hero-reader") && hit.includes("provisional: yes")));
-  assert.ok(hits.some((hit) => hit.includes("shot-library") && hit.includes("Designer sign-off")));
+  assert.ok(hits.some((hit) => hit.includes("shot-library") && hit.includes("provisional: yes")));
   assert.ok(hits.some((hit) => hit.includes("shot-reader") && hit.includes("Gor approval")));
+  assert.equal(hits.some((hit) => hit.includes("Designer sign-off is empty")), false);
 });
