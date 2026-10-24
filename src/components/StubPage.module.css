@@ -1,0 +1,26 @@
+.stub {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-block: 96px;
+}
+
+.title {
+  font-size: clamp(40px, 11.3vw, 44px);
+  line-height: 48px;
+  letter-spacing: -0.036em;
+}
+
+.body {
+  max-width: 40rem;
+  color: var(--text-2);
+  font-size: 17px;
+  line-height: 24px;
+}
+
+@media (min-width: 1024px) {
+  .title {
+    font-size: 64px;
+    line-height: 68px;
+  }
+}

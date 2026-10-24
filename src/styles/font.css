@@ -1,0 +1,38 @@
+/*
+ * Inter 4, SIL OFL, one variable file: wght 400–600, opsz 14–32.
+ * Subset to Latin and Latin-1 (except U+00AD) plus dashes, quotes,
+ * U+2026 and U+202F. Preload this file only.
+ * Fallback metrics match static 400 and 600 to Arial (az average
+ * 934.51 / 2048), the same comparison next/font uses. Arimo and
+ * Liberation Sans share those metrics, so they are listed after Arial.
+ */
+@font-face {
+  font-family: Inter;
+  src: url("/fonts/inter-var-400-600-opsz-latin.woff2") format("woff2");
+  font-weight: 400 600;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020-007E, U+00A0-00AC, U+00AE-00FF, U+2013-2014, U+2019, U+201C-201E, U+2026, U+202F;
+}
+
+@font-face {
+  font-family: "Inter Fallback";
+  src: local("Arial"), local("Arimo"), local("Liberation Sans");
+  font-weight: 400;
+  font-style: normal;
+  size-adjust: 107.89%;
+  ascent-override: 89.79%;
+  descent-override: 22.36%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Inter Fallback";
+  src: local("Arial"), local("Arimo"), local("Liberation Sans");
+  font-weight: 600;
+  font-style: normal;
+  size-adjust: 110.2%;
+  ascent-override: 87.91%;
+  descent-override: 21.89%;
+  line-gap-override: 0%;
+}
