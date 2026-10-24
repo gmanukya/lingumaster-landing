@@ -1,11 +1,14 @@
 export const COPY_STATUS: "draft:copy-new-v1" | "approved" = "approved";
 
+/** D16. Option 1 is the default. Any other value fails check:launch. */
+export const COPY_D16: "pending" | "v2-opt1" | "v2-opt2" = "v2-opt1";
+
 export const DRAFT_LABEL = "BROUILLON";
 
 /** Design-spec placeholder chrome. Not a writer slot. */
 export const placeholders = {
   title: "Visuel à fournir",
-  "hero-library": "Écran principal 2.0.x : bibliothèque d’histoires illustrées",
+  "hero-reader": "Écran principal 2.0.x : lecteur, histoire illustrée",
   "shot-library": "Capture 1 : choisir une histoire (bibliothèque)",
   "shot-reader": "Capture 2 : lecteur, une page d’histoire",
 } as const;
@@ -14,16 +17,19 @@ export const copy = {
   wordmark: "Lingumaster",
   hero: {
     headline: "Ton anglais, une histoire à la fois",
-    subline: "De courtes histoires illustrées en anglais, puis des exercices pour pratiquer. Une app iPhone en français.",
-    imageAlt: "Écran de l’app Lingumaster : la bibliothèque d’histoires illustrées en anglais",
+    subline:
+      "Apprends l’anglais, et d’autres langues, avec des histoires illustrées, puis des exercices pour pratiquer. Sur iPhone.",
+    imageAlt:
+      "Écran de l’app Lingumaster : l’histoire « The Corner Café », avec son illustration et son texte",
   },
   badge: {
+    imageAltNote: "(vide : alt=\"\", le nom vient de l’aria-label du lien)",
     ariaLabel: "Télécharger dans l’App Store : Lingumaster",
   },
   benefits: [
     {
       title: "Apprends en lisant",
-      line: "De courtes histoires illustrées en anglais, à lire chaque jour.",
+      line: "Des histoires illustrées, à lire chaque jour.",
     },
     {
       title: "Tu lis, puis tu pratiques",
@@ -41,14 +47,17 @@ export const copy = {
   captures: [
     {
       caption: "Choisis ton histoire",
-      alt: "Écran de Lingumaster : choix d’une histoire illustrée dans la bibliothèque",
+      alt: "Écran de Lingumaster : la bibliothèque, avec des histoires et des articles à choisir",
     },
     {
-      caption: "Lis l’histoire, page après page",
-      alt: "Écran de Lingumaster : une page d’histoire, avec son illustration et sa phrase",
-      variant: "Une image pour chaque moment de l’histoire",
+      caption: "Lis l’histoire, la traduction juste en dessous",
+      alt: "Écran de Lingumaster : une page de lecture, des mots surlignés et la traduction française sous chaque paragraphe",
+      variant: "Des mots en surbrillance dans le texte",
     },
   ],
+  languages: {
+    line: "Six langues à apprendre : anglais, espagnol, portugais, français, allemand, italien.",
+  },
   trust: {
     line: "L’app de @lingumaster, les défis d’anglais sur TikTok.",
   },
@@ -63,12 +72,15 @@ export const copy = {
     contact: "Contact",
   },
   legal: {
-    appleCredit: "Apple et le logo Apple sont des marques d’Apple Inc., déposées aux États-Unis et dans d’autres pays et régions. App Store est une marque de service d’Apple Inc.",
+    appleCredit:
+      "Apple et le logo Apple sont des marques d’Apple Inc., déposées aux États-Unis et dans d’autres pays et régions. App Store est une marque de service d’Apple Inc.",
   },
   meta: {
     title: "Lingumaster : apprends l’anglais avec des histoires",
-    description: "De courtes histoires illustrées en anglais et des exercices pour pratiquer. App iPhone en français, sur abonnement.",
+    description:
+      "Des histoires illustrées pour apprendre l’anglais et d’autres langues, puis des exercices pour pratiquer. App iPhone, sur abonnement.",
     ogTitle: "Lingumaster : ton anglais, une histoire à la fois",
-    ogDescription: "Lis de courtes histoires en anglais, puis entraîne-toi avec des exercices. L’app de @lingumaster.",
+    ogDescription:
+      "Lis des histoires illustrées pour apprendre l’anglais et d’autres langues. L’app de @lingumaster.",
   },
 } as const;

@@ -1,6 +1,6 @@
 import manifest from "@/generated/screens.json";
 
-export type ScreenName = "hero-library" | "shot-library" | "shot-reader";
+export type ScreenName = "hero-reader" | "shot-library" | "shot-reader";
 
 export type ScreenAsset = {
   src: string;
@@ -9,6 +9,7 @@ export type ScreenAsset = {
   sizes: string;
   width: number;
   height: number;
+  provisional: boolean;
 };
 
 const files = manifest as Record<ScreenName, ScreenAsset | null>;
@@ -17,7 +18,7 @@ export class ScreenAssets {
   static readonly width = 1290;
   static readonly height = 2796;
   static readonly names: readonly ScreenName[] = [
-    "hero-library",
+    "hero-reader",
     "shot-library",
     "shot-reader",
   ];
@@ -27,7 +28,7 @@ export class ScreenAssets {
   }
 
   static altSlot(name: ScreenName): string {
-    if (name === "hero-library") return "hero.imageAlt";
+    if (name === "hero-reader") return "hero.imageAlt";
     if (name === "shot-library") return "captures[0].alt";
     return "captures[1].alt";
   }
