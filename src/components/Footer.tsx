@@ -1,4 +1,5 @@
 import { Copy } from "@/content/Copy";
+import { PUBLISHER_NAME } from "@/content/legal/facts";
 import { SiteConfig } from "@/config";
 import styles from "./Footer.module.css";
 
@@ -29,6 +30,7 @@ export function Footer() {
           ) : null}
         </ul>
         <p className={styles.credit}>{Copy.text("legal.appleCredit")}</p>
+        <p className="vh">Éditeur : {PUBLISHER_NAME}</p>
       </div>
     </footer>
   );

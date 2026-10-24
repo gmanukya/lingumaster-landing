@@ -8,10 +8,12 @@
   "scripts": {
     "prebuild": "node scripts/generate-screens.mjs",
     "build": "NEXT_TELEMETRY_DISABLED=1 next build",
-    "postbuild": "node scripts/defer-runtime.mjs",
+    "postbuild": "node scripts/defer-runtime.mjs && node scripts/legal-canonical.mjs",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "serve": "node scripts/serve.mjs",
+    "test": "node --import ./scripts/register-ts.mjs --test src/content/draft-ribbon.test.ts src/content/legal/guards.test.ts",
+    "check:launch": "node scripts/check-launch.mjs",
     "check:copy": "node scripts/diff-copy.mjs",
     "check:screens": "node scripts/guard-screens.mjs"
   },
