@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
-  const hero = ScreenAssets.asset("hero-library");
+  const hero = ScreenAssets.asset("hero-reader");
   return (
     <PageShell>
       {hero ? (

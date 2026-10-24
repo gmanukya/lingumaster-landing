@@ -24,7 +24,7 @@ export function Hero() {
         <StoreBadge placement="hero" />
       </div>
       <div className={styles.stage}>
-        <Screen name="hero-library" variant="hero" priority />
+        <Screen name="hero-reader" variant="hero" priority />
       </div>
     </section>
   );

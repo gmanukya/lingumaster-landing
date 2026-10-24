@@ -3,8 +3,7 @@ import path from "node:path";
 
 const SLOT_ORDER = {
   Header: ["wordmark"],
-  Hero: ["hero.headline", "hero.subline"],
-  Badge: ["badge.ariaLabel"],
+  Hero: ["hero.headline", "hero.subline", "badge.imageAltNote", "badge.ariaLabel"],
   "3 bénéfices": [
     "benefits[0].title",
     "benefits[0].line",
@@ -13,14 +12,15 @@ const SLOT_ORDER = {
     "benefits[2].title",
     "benefits[2].line",
   ],
-  "Titres masqués": ["headings.benefits", "headings.captures"],
   "Légendes des captures": [
     "captures[0].caption",
     "captures[1].caption",
     "captures[1].variant",
   ],
   "Alt text des écrans": ["hero.imageAlt", "captures[0].alt", "captures[1].alt"],
-  "Ligne de confiance (optionnelle)": ["trust.line"],
+  "Ligne langues": ["languages.line"],
+  "H2 masqués": ["headings.benefits", "headings.captures"],
+  "Ligne de confiance": ["trust.line"],
   "CTA final": ["finalCta.headline", "finalCta.label"],
   Footer: [
     "footer.privacy",
@@ -46,8 +46,9 @@ export class CopyDiff {
     let current = null;
     for (const line of fs.readFileSync(file, "utf8").split("\n")) {
       if (line.startsWith("## ")) {
-        current = line.slice(3).trim();
-        sections.set(current, []);
+        const heading = line.slice(3).trim();
+        current = Object.keys(SLOT_ORDER).find((key) => heading === key || heading.startsWith(`${key} (`)) ?? null;
+        if (current) sections.set(current, []);
         continue;
       }
       if (!current || !line.startsWith("|") || /^\|\s*-+/.test(line)) continue;

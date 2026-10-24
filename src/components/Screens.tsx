@@ -24,7 +24,10 @@ export function Screens() {
             </figure>
           ))}
         </div>
-        <TrustLine />
+        {Copy.present("languages.line") ? (
+          <p className={styles.languages}>{Copy.text("languages.line")}</p>
+        ) : null}
+        <TrustLine afterLanguages={Copy.present("languages.line")} />
       </div>
     </section>
   );
