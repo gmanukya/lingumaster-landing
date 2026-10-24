@@ -90,12 +90,12 @@ Expected, once task (d2) has removed the new site's legal routes and D19 is done
 
 ## JavaScript budget
 
-Measured on the production export of `/` after the footer kept only the Apple credit, gzip level 6, modern browsers (`noModule` chunk excluded):
+Measured on the production export of `/` after the Designer OG image, gzip level 6, modern browsers (`noModule` chunk excluded):
 
-- App Router runtime: 143,846 bytes gzip
+- App Router runtime: 143,855 bytes gzip
 - Campaign `ct` script: 378 bytes gzip
 - `runtime-defer.js`: 290 bytes gzip
-- Together: 144,514 bytes gzip
+- Together: 144,523 bytes gzip
 
 The two framework chunks alone are 71,969 and 46,638 bytes gzip (118,607 bytes). That is already over the 100 KB budget, before the page's own code. The deferred loader keeps those scripts off the first paint. Lighthouse mobile on this build reports Performance 100, LCP 1.7 s, CLS 0, TBT 20 ms. The runtime was not changed. A plain HTML page (design brief §7) stays a proposal, not part of this branch.
 
