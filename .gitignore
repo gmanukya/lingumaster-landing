@@ -2,6 +2,7 @@ node_modules
 .next
 out
 public/screens
+public/assets
 *.tsbuildinfo
 npm-debug.log*
 .DS_Store

@@ -1,17 +1,24 @@
 import { Copy } from "@/content/Copy";
+import { appStoreUrl, type Placement } from "@/lib/campaign";
 import styles from "./StoreBadge.module.css";
 
-type Placement = "hero" | "final";
-
-/** Empty slot sized for the official badge. Task (b) fills the artwork and the link. */
+/** Official French black App Store badge. The SVG bytes are checked at build. */
 export function StoreBadge({ placement }: { placement: Placement }) {
   return (
-    <div
-      className={styles.slot}
-      data-placement={placement}
-      data-store-badge=""
-      aria-hidden="true"
+    <a
+      className={styles.badge}
+      href={appStoreUrl(placement)}
       aria-label={Copy.text("badge.ariaLabel")}
-    />
+      data-placement={placement}
+      suppressHydrationWarning
+    >
+      <img
+        src="/assets/badge-fr-black-official.svg"
+        alt=""
+        width={171}
+        height={54}
+        fetchPriority="low"
+      />
+    </a>
   );
 }
