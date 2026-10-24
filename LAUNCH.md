@@ -34,14 +34,9 @@ Blocked until the domain is bought and the site is connected. The engineer does 
 
 - [ ] Date and person:
 
-## 2. The old Netlify site stays the legal home (Gor, 24 Oct 2026 20:33 WITA)
+## 2. The old Netlify site stays live (Gor, 24 Oct 2026 20:50 WITA)
 
-Never delete, pause or rename `lingumaster.netlify.app`. Keep `/privacy` and `/terms` reachable. There is no 301 and no redirect from this repo. The new site's legal routes are removed by task (d2), not by this branch.
-
-- [ ] Gor names an owner and a second person with access.
-- [ ] Before launch, Gor or his brother update the old privacy page (landing measurement, `lingumaster.app`, processors, a contact email, French and a date).
-- [ ] Run the checks in “Legacy URLs” below and paste the output here.
-- [ ] Date and person:
+The old `lingumaster.netlify.app` site stays live untouched for the App Store and paywall links. Nobody touches it: no deletion, no pause, no rename, no redirect, no edit. Nothing to do for it in this launch.
 
 ## 3. TikTok bio
 
@@ -65,28 +60,9 @@ Never delete, pause or rename `lingumaster.netlify.app`. Keep `/privacy` and `/t
 - [ ] The Revenue Lead starts the Monday `funnel.csv` rows. The 14-day baseline starts.
 - [ ] Date and person:
 
-## Legacy URLs (acceptance criterion 10)
-
-Run these only after step 2, and only once the new legal text is final. Paste the output under step 2. The old-site step is not ticked until this output is pasted.
-
-```bash
-curl -sI https://lingumaster.netlify.app/privacy
-curl -sI https://lingumaster.netlify.app/terms
-curl -sIL https://lingumaster.netlify.app/privacy
-curl -sIL https://lingumaster.netlify.app/terms
-curl -sI https://lingumaster.app/privacy
-curl -sI https://lingumaster.app/terms
-```
-
-Expected, once task (d2) has removed the new site's legal routes and D19 is done:
-
-- The old `/privacy` and `/terms` answer `200` (at most one redirect). Nothing on the old site is deleted or redirected.
-- `https://lingumaster.app/privacy` and `/terms` return `404`.
-- The old privacy body contains `lingumaster.app`, the agreed measurement phrase and a contact email, and contains neither « not collected by me » nor « Mindflow ».
-
 ## Contact before launch (D12)
 
-`check:launch` fails while `contactHref` is empty unless `ACCEPT_NO_CONTACT=true` is set for the launch build and `SiteConfig.acceptNoContact` names who accepted it and when. The rights and publisher-address sections still cannot contain `[À COMPLÉTER`.
+`check:launch` fails while `contactHref` is empty unless `ACCEPT_NO_CONTACT=true` is set for the launch build and `SiteConfig.acceptNoContact` names who accepted it and when.
 
 ## JavaScript budget
 
