@@ -1,5 +1,10 @@
-import { StubPage } from "@/components/StubPage";
+import { LegalLayout } from "@/components/LegalLayout";
+import { legalPage } from "@/content/legal/meta";
+
+const page = legalPage("privacy");
+
+export const metadata = page.metadata;
 
 export default function PrivacyPage() {
-  return <StubPage titleSlot="privacy.title" bodySlot="privacy.body" />;
+  return <LegalLayout doc={page.doc} />;
 }
