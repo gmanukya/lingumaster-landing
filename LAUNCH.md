@@ -90,13 +90,13 @@ Expected, once task (d2) has removed the new site's legal routes and D19 is done
 
 ## JavaScript budget
 
-Measured on the production export of `/`, gzip level 6, modern browsers (`noModule` chunk excluded):
+Measured on the production export of `/` after the three captures and the locked copy, gzip level 6, modern browsers (`noModule` chunk excluded):
 
-- App Router runtime: 143,840 bytes gzip
+- App Router runtime: 144,040 bytes gzip
 - Campaign `ct` script: 378 bytes gzip
 - `runtime-defer.js`: 290 bytes gzip
-- Together: 144,508 bytes gzip
+- Together: 144,708 bytes gzip
 
-The two framework chunks alone are 71,969 and 46,638 bytes gzip (118,607 bytes). That is already over the 100 KB budget, before the page's own code. The deferred loader keeps those scripts off the first paint. Lighthouse mobile on this build still reports Performance 100, LCP 1.4 s, CLS 0, TBT 23 ms.
+The two framework chunks alone are 71,969 and 46,638 bytes gzip (118,607 bytes). That is already over the 100 KB budget, before the page's own code. The deferred loader keeps those scripts off the first paint. Lighthouse mobile on this build reports Performance 100, LCP 1.6 s, CLS 0, TBT 31 ms. The runtime was not changed. A plain HTML page (design brief §7) stays a proposal, not part of this branch.
 
 Replacing the runtime with a plain HTML page (design brief §7) is the fallback if the budget has to be met. That change is not in this branch: it would drop hydration of the measurement adapter.
