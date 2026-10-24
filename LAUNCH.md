@@ -2,22 +2,21 @@
 
 Human steps only. Agents do not buy the domain, touch Netlify, change DNS, deploy, or tick these boxes. Nothing below is done.
 
-The build can be checked locally. `npm run check:launch` stays red until every gate in task (e) item 6 is true: real captures, legal markers gone, contact acknowledged, and the OG image replaced. Approved copy does not make the page launchable.
+The build can be checked locally. `npm run check:launch` stays red until every gate in task (e) item 6 is true. Approved copy does not make the page launchable. The three cleaned captures are in the build and still provisional: `CAPTURES.md` has no Designer sign-off and no Gor approval, so each image carries `data-provisional="true"`. The OG image is still the temporary wordmark.
 
 The 404 page still renders `[copy: notFound.title]` and `[copy: notFound.body]`. Those slots are not in the approved copy. The Writer supplies them. The gate fails on that HTML until then.
 
-## 0. Captures (D13, Gor or his brother)
+## 0. Captures (D13 answered, D15 resolved)
 
-- [ ] Capture 3 fresh 2.0.x screens on an iPhone or the iOS Simulator, at 1290 × 2796, with a clean status bar and no marketing text.
-  - Hero: library (`hero-library`)
-  - Capture 1: library (`shot-library`)
-  - Capture 2: reader (`shot-reader`)
-- [ ] No AI or correction UI. No `live3` / `ss3`.
-- [ ] The Writer re-checks the alt texts against the real screens.
-- [ ] The Designer replaces the temporary wordmark OG image (`public/og.png`, 1200 × 630) and drops the `placeholder` / `check:launch` mark.
+Gor supplied the captures on 24 Oct 2026. The three cleaned files are exported. What is left is human:
+
+- [ ] Designer: sign off `shot6-clean.png`, `shot9-library-clean.png` and `shot7-clean.png` in `src/assets/screens/CAPTURES.md` (`provisional: no`, name and date).
+- [ ] Designer: make the OG image once the three captures are final, and drop the `placeholder` / `check:launch` mark on `public/og.png`.
+- [ ] Writer: re-check the alt texts and the Capture 1 caption against the final images.
+- [ ] Gor: approve the final three through the CEO. The approval reference goes in `CAPTURES.md`.
 - [ ] Date and person:
 
-The box cannot run iOS. Gor said on 24 Oct 2026 at 11:19 WITA that he will provide the captures later.
+The box cannot run iOS. The unused Today capture is not exported. Raw captures are not in this repo.
 
 ## 1. Domain and Netlify (D14, Gor or his brother)
 
@@ -35,15 +34,13 @@ Blocked until the domain is bought and the site is connected. The engineer does 
 
 - [ ] Date and person:
 
-## 2. Legacy `/privacy` and `/terms` (D14, Gor or his brother)
+## 2. The old Netlify site stays the legal home (Gor, 24 Oct 2026 20:33 WITA)
 
-Do this only after the new legal pages are final (no `[À COMPLÉTER` markers). Until then the old site stays untouched. Nothing on the old site is deleted.
+Never delete, pause or rename `lingumaster.netlify.app`. Keep `/privacy` and `/terms` reachable. There is no 301 and no redirect from this repo. The new site's legal routes are removed by task (d2), not by this branch.
 
-The 301 can only be configured on the old Netlify site (`lingumaster.netlify.app`, repo `Amanukyan/Lingumaster-landing-page`). It is not an engineer task and it is not done from this repo.
-
-- [ ] Either leave the old site live and untouched, or add 301s from `https://lingumaster.netlify.app/privacy` and `/terms` to `https://lingumaster.app/privacy` and `/terms`. A forced rule may be needed because the old pages exist.
+- [ ] Gor names an owner and a second person with access.
+- [ ] Before launch, Gor or his brother update the old privacy page (landing measurement, `lingumaster.app`, processors, a contact email, French and a date).
 - [ ] Run the checks in “Legacy URLs” below and paste the output here.
-- [ ] Later, Gor updates the App Store Connect privacy and terms URLs, and the app's `PaywallView` URLs, in the next app release.
 - [ ] Date and person:
 
 ## 3. TikTok bio
@@ -81,11 +78,11 @@ curl -sI https://lingumaster.app/privacy
 curl -sI https://lingumaster.app/terms
 ```
 
-Expected:
+Expected, once task (d2) has removed the new site's legal routes and D19 is done:
 
-- The old `/privacy` and `/terms` each return either `200` (old site left untouched) or `301` with `location: https://lingumaster.app/privacy` or `/terms`.
-- `curl -sIL` on both ends at `200` on the final page (old or new).
-- `https://lingumaster.app/privacy` and `/terms` return `200` (at most one `301` to a trailing-slash form; the final status is 200).
+- The old `/privacy` and `/terms` answer `200` (at most one redirect). Nothing on the old site is deleted or redirected.
+- `https://lingumaster.app/privacy` and `/terms` return `404`.
+- The old privacy body contains `lingumaster.app`, the agreed measurement phrase and a contact email, and contains neither « not collected by me » nor « Mindflow ».
 
 ## Contact before launch (D12)
 

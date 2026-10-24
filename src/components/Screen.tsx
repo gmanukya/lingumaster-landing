@@ -27,7 +27,7 @@ export function Screen({
     .join(" ");
 
   return (
-    <div className={className}>
+    <div className={className} data-screen={name}>
       <span className={`${styles.button} ${styles.b1}`} aria-hidden="true" />
       <span className={`${styles.button} ${styles.b2}`} aria-hidden="true" />
       <span className={`${styles.button} ${styles.b3}`} aria-hidden="true" />
@@ -43,11 +43,12 @@ export function Screen({
                 srcSet={asset.webpSrcSet}
                 sizes={asset.sizes}
                 alt={alt}
-                width={asset.width}
-                height={asset.height}
+                width={ScreenAssets.width}
+                height={ScreenAssets.height}
                 loading={priority ? "eager" : "lazy"}
-                fetchPriority={priority ? "high" : "auto"}
-                decoding="async"
+                fetchPriority={priority ? "high" : undefined}
+                decoding={priority ? "auto" : "async"}
+                data-provisional={asset.provisional ? "true" : undefined}
               />
             </picture>
           ) : (

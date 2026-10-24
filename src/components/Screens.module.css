@@ -29,6 +29,17 @@
   text-align: center;
 }
 
+.languages {
+  max-width: 312px;
+  margin: 56px auto 0;
+  color: var(--on-dark-2);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 22px;
+  letter-spacing: 0;
+  text-align: center;
+}
+
 @media (min-width: 1024px) {
   .dark {
     padding: 160px 0 144px;
@@ -48,5 +59,12 @@
     font-size: 28px;
     line-height: 32px;
     letter-spacing: -0.026em;
+  }
+
+  .languages {
+    max-width: 640px;
+    margin-top: 88px;
+    font-size: 17px;
+    line-height: 26px;
   }
 }

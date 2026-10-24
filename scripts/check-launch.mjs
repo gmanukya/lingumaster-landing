@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { CaptureGates } from "./launch-gates.mjs";
 
 /**
  * Launch gate.
@@ -24,7 +25,7 @@ export class LaunchCheck {
     ["/mois", /\/mois/],
     ["/an", /\/an/],
   ];
-  static screenNames = ["hero-library", "shot-library", "shot-reader"];
+  static screenNames = ["hero-reader", "shot-library", "shot-reader"];
   static ogMark = "placeholder\0check:launch";
 
   static walk(dir, found = [], extensions = null) {
@@ -447,10 +448,13 @@ export class LaunchCheck {
     return fs.existsSync(out) ? [src, out] : [src];
   }
 
-  static run(roots, project) {
+  static async run(roots, project) {
     const problems = [];
     for (const check of LaunchCheck.checks) problems.push(...check(roots));
-    if (project) problems.push(...LaunchCheck.projectGates());
+    if (project) {
+      problems.push(...LaunchCheck.projectGates());
+      problems.push(...(await CaptureGates.run()));
+    }
     if (problems.length > 0) {
       console.error(`check:launch: ${problems.length} problem(s)`);
       for (const problem of problems) console.error(`  ${problem}`);
@@ -474,4 +478,4 @@ function rootsFromArgv(argv) {
 
 const { roots, project } = rootsFromArgv(process.argv.slice(2));
 if (!roots) process.exit(1);
-process.exit(LaunchCheck.run(roots, project));
+process.exit(await LaunchCheck.run(roots, project));
