@@ -369,20 +369,156 @@ export class LaunchCheck {
     return pairs;
   }
 
-  static analytics() {
+  static uuid(value) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      String(value ?? "").trim(),
+    );
+  }
+
+  static cspTokens(csp, directive) {
+    const part = String(csp ?? "")
+      .split(";")
+      .map((item) => item.trim())
+      .find((item) => item === directive || item.startsWith(`${directive} `));
+    if (!part) return [];
+    return part.split(/\s+/).slice(1);
+  }
+
+  static umamiScriptTags(html) {
+    return [...String(html ?? "").matchAll(/<script\b[^>]*>/gi)]
+      .map((match) => match[0])
+      .filter((tag) => /src=["']https:\/\/cloud\.umami\.is\/script\.js["']/.test(tag));
+  }
+
+  static readTestEventSeen(config) {
+    const block = /static\s+readonly\s+analytics\s*=\s*\{([\s\S]*?)\n\s*\};/.exec(String(config ?? ""));
+    if (!block) return null;
+    if (/testEventSeen\s*:\s*null\b/.test(block[1])) return null;
+    const by = /by\s*:\s*"([^"]+)"/.exec(block[1]);
+    const at = /at\s*:\s*"([^"]+)"/.exec(block[1]);
+    if (!by || !at) return null;
+    return { by: by[1], at: at[1] };
+  }
+
+  /**
+   * Production analytics gate. The code default stays noop.
+   * A launch build needs Umami selected, a UUID, the static script tag,
+   * the two CSP origins, data-domains exactly lingumaster.app, and
+   * analytics.testEventSeen recorded. An explicit noop launch does not pass.
+   */
+  static analyticsProblems(input) {
     const hits = [];
-    if (process.env.NEXT_PUBLIC_ANALYTICS === "debug") hits.push("analytics: adapter is debug");
-    const registry = LaunchCheck.read("src/lib/analytics/registry.ts");
-    if (!registry.includes("return noopAdapter")) hits.push("analytics: default is not noop");
-    const out = path.resolve("out");
-    if (!fs.existsSync(out)) return hits;
-    for (const file of LaunchCheck.walk(out, [], new Set([".js", ".html"]))) {
-      const text = fs.readFileSync(file, "utf8");
-      if (text.includes('selectAdapter("debug")') || text.includes("selectAdapter('debug')")) {
-        hits.push(`analytics: ${LaunchCheck.rel(file)} selects debug`);
+    const name = typeof input.analytics === "string" ? input.analytics.trim() : "";
+    if (name === "debug" || input.debugInOutput) hits.push("analytics: adapter is debug");
+    if (!String(input.registry ?? "").includes("return noopAdapter")) {
+      hits.push("analytics: default is not noop");
+    }
+    const websiteId = typeof input.websiteId === "string" ? input.websiteId.trim() : "";
+    if (name !== "umami" || !websiteId) {
+      hits.push(
+        "analytics: production env var missing (set NEXT_PUBLIC_ANALYTICS=umami and NEXT_PUBLIC_UMAMI_WEBSITE_ID in the Netlify production context; they are not committed)",
+      );
+    } else if (!LaunchCheck.uuid(websiteId)) {
+      hits.push("analytics: NEXT_PUBLIC_UMAMI_WEBSITE_ID is not a UUID");
+    }
+    const override = typeof input.domainsOverride === "string" ? input.domainsOverride.trim() : "";
+    if (override && override !== "lingumaster.app") {
+      hits.push("analytics: data-domains is not lingumaster.app");
+    }
+    if (
+      /NEXT_PUBLIC_ANALYTICS|NEXT_PUBLIC_UMAMI_WEBSITE_ID|NEXT_PUBLIC_UMAMI_DOMAINS/.test(String(input.toml ?? ""))
+    ) {
+      hits.push("analytics: analytics env vars are committed in netlify.toml");
+    }
+    if (!input.indexPresent) {
+      hits.push("analytics: script tag missing from out/index.html");
+    } else {
+      const tags = LaunchCheck.umamiScriptTags(input.html);
+      if (tags.length === 0) hits.push("analytics: script tag missing from out/index.html");
+      else if (tags.length !== 1) hits.push("analytics: expected exactly one Umami script tag in out/index.html");
+      else hits.push(...LaunchCheck.umamiTagProblems(tags[0]));
+      const html = String(input.html ?? "");
+      if (/data-umami-event/i.test(html)) hits.push("analytics: data-umami-event is present");
+      if (/data-do-not-track/i.test(html) && !hits.some((hit) => hit.includes("data-do-not-track"))) {
+        hits.push("analytics: data-do-not-track is present");
       }
     }
+    const scriptSrc = LaunchCheck.cspTokens(input.csp, "script-src");
+    const connectSrc = LaunchCheck.cspTokens(input.csp, "connect-src");
+    if (!scriptSrc.includes("https://cloud.umami.is")) {
+      hits.push("analytics: CSP script-src is missing https://cloud.umami.is");
+    }
+    if (!connectSrc.includes("https://gateway.umami.is")) {
+      hits.push("analytics: CSP connect-src is missing https://gateway.umami.is");
+    }
+    if ([...scriptSrc, ...connectSrc].some((token) => token.includes("*"))) {
+      hits.push("analytics: CSP has a wildcard");
+    }
+    if (/unsafe-inline/i.test(String(input.csp ?? ""))) hits.push("analytics: CSP has unsafe-inline");
+    if (!input.testEventSeen?.by || !input.testEventSeen?.at) {
+      hits.push(
+        "analytics: testEventSeen is unset (Gor or his brother sets SiteConfig.analytics.testEventSeen with by and at after the test event)",
+      );
+    }
     return hits;
+  }
+
+  static umamiTagProblems(tag) {
+    const hits = [];
+    if (!/\sdefer(?:[\s=/>]|$)/.test(tag)) hits.push("analytics: script tag is missing defer");
+    const foundId = /data-website-id=["']([^"']*)["']/.exec(tag);
+    if (!foundId || !LaunchCheck.uuid(foundId[1])) {
+      hits.push("analytics: script data-website-id is missing or not a UUID");
+    }
+    const domains = /data-domains=["']([^"']*)["']/.exec(tag);
+    if (!domains || domains[1] !== "lingumaster.app") hits.push("analytics: data-domains is not lingumaster.app");
+    if (!/data-auto-pageview=["']false["']/.test(tag)) {
+      hits.push('analytics: data-auto-pageview is not "false"');
+    }
+    if (/data-do-not-track/i.test(tag)) hits.push("analytics: data-do-not-track is present");
+    for (const attr of ["data-host-url", "data-performance", "data-distinct-id"]) {
+      if (tag.includes(attr)) hits.push(`analytics: ${attr} is present`);
+    }
+    return hits;
+  }
+
+  static analytics() {
+    let toml = "";
+    let csp = "";
+    try {
+      toml = fs.readFileSync(path.resolve("netlify.toml"), "utf8");
+      const doc = LaunchCheck.parseToml(toml);
+      const star = doc.headers.find((header) => header.for === "/*");
+      csp = String(star?.values?.["Content-Security-Policy"] ?? "");
+    } catch (error) {
+      return [`analytics: ${error.message}`];
+    }
+    const index = path.resolve("out/index.html");
+    const indexPresent = fs.existsSync(index);
+    const html = indexPresent ? fs.readFileSync(index, "utf8") : "";
+    let debugInOutput = false;
+    const out = path.resolve("out");
+    if (fs.existsSync(out)) {
+      for (const file of LaunchCheck.walk(out, [], new Set([".js", ".html"]))) {
+        const text = fs.readFileSync(file, "utf8");
+        if (text.includes('selectAdapter("debug")') || text.includes("selectAdapter('debug')")) {
+          debugInOutput = true;
+          break;
+        }
+      }
+    }
+    return LaunchCheck.analyticsProblems({
+      analytics: process.env.NEXT_PUBLIC_ANALYTICS,
+      websiteId: process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID,
+      domainsOverride: process.env.NEXT_PUBLIC_UMAMI_DOMAINS,
+      html,
+      indexPresent,
+      csp,
+      testEventSeen: LaunchCheck.readTestEventSeen(LaunchCheck.read("src/config.ts")),
+      registry: LaunchCheck.read("src/lib/analytics/registry.ts"),
+      debugInOutput,
+      toml,
+    });
   }
 
   static contact() {

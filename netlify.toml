@@ -21,7 +21,7 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     X-Frame-Options = "DENY"
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
-    Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self'; font-src 'self'; style-src 'self'; connect-src 'self'; script-src 'self' 'sha256-jDoilTXt2672yl6/ZkU7UxAf+cNiTalm42YM1aMWaw4='"
+    Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self'; font-src 'self'; style-src 'self'; connect-src 'self' https://gateway.umami.is; script-src 'self' 'sha256-jDoilTXt2672yl6/ZkU7UxAf+cNiTalm42YM1aMWaw4=' https://cloud.umami.is"
     Strict-Transport-Security = "max-age=31536000"
     Cache-Control = "public, max-age=0, must-revalidate"
 

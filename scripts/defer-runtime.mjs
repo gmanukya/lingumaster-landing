@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 /**
  * The App Router runtime is not needed to paint the static page.
@@ -34,6 +35,7 @@ export class RuntimeDeferral {
       .replace(RuntimeDeferral.scriptTag, (full, attrs, body) => {
         if (/\sid=["']campaign-ct["']/.test(attrs)) return full;
         if (/type=["']application\/json["']/.test(attrs)) return full;
+        if (/https:\/\/cloud\.umami\.is\/script\.js/.test(attrs)) return full;
         const src = /\ssrc=["']([^"']+)["']/.exec(attrs);
         if (src) {
           external.push({ src: src[1], noModule: /noModule/i.test(attrs) });
@@ -136,5 +138,8 @@ class SiteUrls {
   }
 }
 
-SiteUrls.run();
-RuntimeDeferral.run();
+const invoked = process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
+if (invoked) {
+  SiteUrls.run();
+  RuntimeDeferral.run();
+}

@@ -14,4 +14,13 @@ export class SiteConfig {
    * ACCEPT_NO_CONTACT=true in the environment that builds the launch.
    */
   static readonly acceptNoContact: { by: string; at: string } | null = null;
+
+  /**
+   * D3. Null until Gor or his brother has seen the Umami test event
+   * on lingumaster.app. `by` is the person, `at` is the ISO date.
+   * The Website ID is a Netlify production environment variable, not a field here.
+   */
+  static readonly analytics = {
+    testEventSeen: null as { by: string; at: string } | null,
+  };
 }

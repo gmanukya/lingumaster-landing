@@ -8,7 +8,12 @@ import test from "node:test";
 import { BandCheck } from "./band-check.mjs";
 import { RAW_HASHES } from "./capture-slots.mjs";
 import { LaunchCheck } from "./check-launch.mjs";
+import { RuntimeDeferral } from "./defer-runtime.mjs";
 import { CaptureGates } from "./launch-gates.mjs";
+
+const EXAMPLE_WEBSITE_ID = "50533390-5f46-4f32-b670-f4a9db0627ca";
+const GOOD_CSP =
+  "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self'; font-src 'self'; style-src 'self'; connect-src 'self' https://gateway.umami.is; script-src 'self' 'sha256-jDoilTXt2672yl6/ZkU7UxAf+cNiTalm42YM1aMWaw4=' https://cloud.umami.is";
 
 const fixtures = path.resolve("scripts/fixtures");
 
@@ -105,6 +110,161 @@ test("the Designer OG passes and the temporary wordmark fails", () => {
   const changedHit = LaunchCheck.ogProblems(changed, "out/og.png")[0];
   assert.match(changedHit, /does not match/);
   assert.match(changedHit, new RegExp(designerHash));
+});
+
+function analyticsFixture(overrides = {}) {
+  return {
+    analytics: "umami",
+    websiteId: EXAMPLE_WEBSITE_ID,
+    domainsOverride: "",
+    html: fs.readFileSync(path.join(fixtures, "analytics/good-script.html"), "utf8"),
+    indexPresent: true,
+    csp: GOOD_CSP,
+    testEventSeen: { by: "Gor", at: "2026-10-25" },
+    registry: "function selectAdapter(){ return noopAdapter }",
+    debugInOutput: false,
+    toml: "# env vars are set in the Netlify production context\n",
+    ...overrides,
+  };
+}
+
+test("check:launch analytics passes on the good build fixture", () => {
+  assert.deepEqual(LaunchCheck.analyticsProblems(analyticsFixture()), []);
+});
+
+test("check:launch analytics fails when the production env var is missing", () => {
+  const hits = LaunchCheck.analyticsProblems(analyticsFixture({ analytics: undefined, websiteId: undefined }));
+  assert.equal(hits.length, 1);
+  assert.match(hits[0], /production env var missing/);
+  assert.match(hits[0], /Netlify production context/);
+});
+
+test("check:launch analytics fails on an invalid website UUID", () => {
+  const hits = LaunchCheck.analyticsProblems(
+    analyticsFixture({
+      websiteId: "not-a-uuid",
+      html: fs.readFileSync(path.join(fixtures, "analytics/invalid-uuid.html"), "utf8"),
+    }),
+  );
+  assert.ok(hits.some((hit) => hit.includes("NEXT_PUBLIC_UMAMI_WEBSITE_ID is not a UUID")));
+  assert.ok(hits.some((hit) => hit.includes("data-website-id is missing or not a UUID")));
+  assert.equal(hits.some((hit) => hit.includes("production env var missing")), false);
+});
+
+test("check:launch analytics fails when the script tag is missing from out/index.html", () => {
+  const hits = LaunchCheck.analyticsProblems(
+    analyticsFixture({
+      html: fs.readFileSync(path.join(fixtures, "analytics/missing-script.html"), "utf8"),
+    }),
+  );
+  assert.deepEqual(hits, ["analytics: script tag missing from out/index.html"]);
+});
+
+test("check:launch analytics fails when the CSP lacks the two Umami origins", () => {
+  const hits = LaunchCheck.analyticsProblems(
+    analyticsFixture({
+      csp: "default-src 'self'; connect-src 'self'; script-src 'self' 'sha256-jDoilTXt2672yl6/ZkU7UxAf+cNiTalm42YM1aMWaw4='",
+    }),
+  );
+  assert.ok(hits.some((hit) => hit.includes("script-src is missing https://cloud.umami.is")));
+  assert.ok(hits.some((hit) => hit.includes("connect-src is missing https://gateway.umami.is")));
+  const swapped = LaunchCheck.analyticsProblems(
+    analyticsFixture({
+      csp: "connect-src 'self' https://cloud.umami.is; script-src 'self' https://gateway.umami.is",
+    }),
+  );
+  assert.ok(swapped.some((hit) => hit.includes("script-src is missing https://cloud.umami.is")));
+  assert.ok(swapped.some((hit) => hit.includes("connect-src is missing https://gateway.umami.is")));
+});
+
+test("check:launch analytics fails when data-domains is not lingumaster.app", () => {
+  const hits = LaunchCheck.analyticsProblems(
+    analyticsFixture({
+      html: fs.readFileSync(path.join(fixtures, "analytics/domains.html"), "utf8"),
+      domainsOverride: "localhost",
+    }),
+  );
+  assert.ok(hits.some((hit) => hit === "analytics: data-domains is not lingumaster.app"));
+  assert.equal(hits.filter((hit) => hit.includes("data-domains")).length >= 1, true);
+});
+
+test("check:launch analytics fails when data-do-not-track is present", () => {
+  const hits = LaunchCheck.analyticsProblems(
+    analyticsFixture({
+      html: fs.readFileSync(path.join(fixtures, "analytics/do-not-track.html"), "utf8"),
+    }),
+  );
+  assert.deepEqual(hits, ["analytics: data-do-not-track is present"]);
+});
+
+test("check:launch analytics fails when testEventSeen is unset", () => {
+  const hits = LaunchCheck.analyticsProblems(analyticsFixture({ testEventSeen: null }));
+  assert.equal(hits.length, 1);
+  assert.match(hits[0], /testEventSeen is unset/);
+});
+
+test("check:launch analytics fails when the adapter is debug", () => {
+  const hits = LaunchCheck.analyticsProblems(analyticsFixture({ analytics: "debug", debugInOutput: true }));
+  assert.ok(hits.some((hit) => hit === "analytics: adapter is debug"));
+  assert.ok(hits.some((hit) => hit.includes("production env var missing")));
+});
+
+test("check:launch analytics rejects a CSP wildcard, unsafe-inline, and committed env vars", () => {
+  const wildcard = LaunchCheck.analyticsProblems(
+    analyticsFixture({
+      csp: GOOD_CSP.replace("script-src 'self'", "script-src 'self' *"),
+    }),
+  );
+  assert.ok(wildcard.some((hit) => hit.includes("wildcard")));
+  const inline = LaunchCheck.analyticsProblems(
+    analyticsFixture({
+      csp: GOOD_CSP.replace("script-src 'self'", "script-src 'self' 'unsafe-inline'"),
+    }),
+  );
+  assert.ok(inline.some((hit) => hit.includes("unsafe-inline")));
+  const committed = LaunchCheck.analyticsProblems(
+    analyticsFixture({ toml: 'NEXT_PUBLIC_ANALYTICS = "umami"\nNEXT_PUBLIC_UMAMI_WEBSITE_ID = "50533390-5f46-4f32-b670-f4a9db0627ca"\n' }),
+  );
+  assert.ok(committed.some((hit) => hit.includes("committed in netlify.toml")));
+});
+
+test("the repo does not commit the Umami env vars, and testEventSeen is still unset", () => {
+  const toml = fs.readFileSync(path.resolve("netlify.toml"), "utf8");
+  assert.equal(toml.includes("NEXT_PUBLIC_ANALYTICS"), false);
+  assert.equal(toml.includes("NEXT_PUBLIC_UMAMI_WEBSITE_ID"), false);
+  assert.equal(toml.includes("NEXT_PUBLIC_UMAMI_DOMAINS"), false);
+  assert.equal(toml.includes(EXAMPLE_WEBSITE_ID), false);
+  const doc = LaunchCheck.parseToml(toml);
+  const csp = String(doc.headers.find((header) => header.for === "/*")?.values?.["Content-Security-Policy"] ?? "");
+  assert.equal(csp.includes("*"), false);
+  assert.equal(/unsafe-inline/i.test(csp), false);
+  assert.match(toml, /https:\/\/cloud\.umami\.is/);
+  assert.match(toml, /https:\/\/gateway\.umami\.is/);
+  assert.match(toml, /sha256-jDoilTXt2672yl6\/ZkU7UxAf\+cNiTalm42YM1aMWaw4=/);
+  const seen = LaunchCheck.readTestEventSeen(fs.readFileSync(path.resolve("src/config.ts"), "utf8"));
+  assert.equal(seen, null);
+  const filled = LaunchCheck.readTestEventSeen(
+    'class SiteConfig { static readonly analytics = {\n  testEventSeen: { by: "Gor", at: "2026-10-26" },\n}; }',
+  );
+  assert.deepEqual(filled, { by: "Gor", at: "2026-10-26" });
+});
+
+test("the runtime deferral leaves the static Umami script in the HTML", () => {
+  const tag = fs.readFileSync(path.join(fixtures, "analytics/good-script.html"), "utf8").trim();
+  const html = `<!doctype html><html><body><script id="campaign-ct">void 0</script><script src="/_next/static/chunks/app.js"></script>${tag}</body></html>`;
+  const parts = RuntimeDeferral.rewrite(html);
+  assert.ok(parts);
+  assert.match(parts.html, /src="https:\/\/cloud\.umami\.is\/script\.js"/);
+  assert.match(parts.html, /defer/);
+  assert.match(parts.html, /data-domains="lingumaster.app"/);
+  assert.match(parts.html, /data-auto-pageview="false"/);
+  assert.match(parts.html, new RegExp(EXAMPLE_WEBSITE_ID));
+  assert.equal(parts.html.includes("/_next/static/chunks/app.js"), false);
+  assert.equal(parts.html.includes('id="campaign-ct"'), true);
+  assert.deepEqual(
+    parts.external.map((item) => item.src),
+    ["/_next/static/chunks/app.js"],
+  );
 });
 
 test("one leftover data-placeholder fails check:launch", () => {
