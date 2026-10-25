@@ -3,6 +3,7 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { parseIco, pngInfo } from "./generate-brand.mjs";
 import { CaptureGates } from "./launch-gates.mjs";
 
 /**
@@ -591,6 +592,7 @@ export class LaunchCheck {
     else {
       const header = headers[0][0];
       if (/<a\b/i.test(header)) hits.push("404: the header wordmark is a link");
+      if (/<img\b/i.test(header)) hits.push("404: the header contains a mark");
       if (!header.includes(copy.wordmark)) hits.push("404: the header is missing the wordmark");
     }
     if (/<footer\b/i.test(visible)) hits.push("404: contains a footer");
@@ -617,6 +619,239 @@ export class LaunchCheck {
       const locs = [...fs.readFileSync(sitemap, "utf8").matchAll(/<loc>([^<]*)<\/loc>/g)].map((match) => match[1]);
       if (locs.some((loc) => /404|not-found/i.test(loc))) hits.push("404: out/sitemap.xml has a 404 entry");
     }
+    return hits;
+  }
+
+  static masterHashFile = path.resolve("src/assets/brand/lingumaster-logo-official.jpg.sha256");
+
+  static recordedMasterHash() {
+    if (!fs.existsSync(LaunchCheck.masterHashFile)) return "";
+    const hash = fs.readFileSync(LaunchCheck.masterHashFile, "utf8").trim().split(/\s+/)[0] ?? "";
+    return /^[a-f0-9]{64}$/.test(hash) ? hash : "";
+  }
+
+  static linkAttrs(tag) {
+    const attrs = {};
+    for (const found of tag.matchAll(/([\w:-]+)="([^"]*)"/g)) attrs[found[1].toLowerCase()] = found[2];
+    return attrs;
+  }
+
+  static iconLinkTags(html) {
+    return [...String(html).matchAll(/<link\b[^>]*>/gi)]
+      .map((match) => LaunchCheck.linkAttrs(match[0]))
+      .filter((attrs) => attrs.rel === "icon" || attrs.rel === "shortcut icon" || attrs.rel === "apple-touch-icon");
+  }
+
+  static iconHrefPath(href) {
+    return String(href ?? "").split("?")[0];
+  }
+
+  static shippedMasterProblems(dir, hash) {
+    if (!hash) return ["brand: master sha256 sidecar is missing"];
+    if (!fs.existsSync(dir)) return ["brand: out/ is missing"];
+    const hits = [];
+    for (const file of LaunchCheck.walk(dir)) {
+      const digest = crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
+      if (digest === hash) hits.push(`brand: raw master shipped at ${LaunchCheck.rel(file)}`);
+    }
+    return hits;
+  }
+
+  static allowedLargeImage(name) {
+    if (name === "og.png") return true;
+    return /^(?:hero-reader|shot-library|shot-reader)(?:-|\.)/.test(name);
+  }
+
+  static async oversizedImageProblems(dir) {
+    if (!fs.existsSync(dir)) return ["brand: out/ is missing"];
+    const sharp = (await import("sharp")).default;
+    const extensions = new Set([".png", ".webp", ".avif", ".jpg", ".jpeg", ".gif"]);
+    const hits = [];
+    for (const file of LaunchCheck.walk(dir)) {
+      if (!extensions.has(path.extname(file).toLowerCase())) continue;
+      const base = path.basename(file);
+      let meta;
+      try {
+        meta = await sharp(file, { failOn: "none" }).metadata();
+      } catch (error) {
+        hits.push(`brand: could not read ${LaunchCheck.rel(file)} (${error.message})`);
+        continue;
+      }
+      if ((meta.width > 400 || meta.height > 400) && !LaunchCheck.allowedLargeImage(base)) {
+        hits.push(`brand: ${LaunchCheck.rel(file)} is ${meta.width}x${meta.height}`);
+      }
+    }
+    return hits;
+  }
+
+  static iconAlphaProblems(bytes, label) {
+    const info = pngInfo(bytes);
+    if (!info) return [`brand: ${label} is not a png`];
+    if (info.alpha) return [`brand: ${label} has alpha`];
+    return [];
+  }
+
+  static async icoAlphaProblems(bytes, label) {
+    let images;
+    try {
+      images = parseIco(bytes);
+    } catch (error) {
+      return [`brand: ${label} is not an ico (${error.message})`];
+    }
+    const hits = [];
+    const sizes = images.map((image) => image.width).join(",");
+    if (sizes !== "16,32,48") hits.push(`brand: ${label} sizes are ${sizes || "none"}, expected 16,32,48`);
+    const sharp = (await import("sharp")).default;
+    for (const image of images) {
+      const info = pngInfo(image.data);
+      if (!info || info.colorType !== 6) {
+        hits.push(`brand: ${label} ${image.width} is not an RGBA png`);
+        continue;
+      }
+      const { data, info: raw } = await sharp(image.data).raw().toBuffer({ resolveWithObject: true });
+      for (let index = raw.channels - 1; index < data.length; index += raw.channels) {
+        if (data[index] !== 255) {
+          hits.push(`brand: ${label} ${image.width} has alpha`);
+          break;
+        }
+      }
+    }
+    return hits;
+  }
+
+  static appleIconProblems(dir) {
+    if (!fs.existsSync(dir)) return ["brand: apple-icon is missing"];
+    const found = fs.readdirSync(dir).some((name) => /^apple-icon[^/]*\.png$/.test(name));
+    if (!found) return ["brand: apple-icon is missing"];
+    return [];
+  }
+
+  static standInProblems(dir) {
+    if (!fs.existsSync(dir)) return [];
+    const hits = [];
+    for (const file of LaunchCheck.walk(dir)) {
+      if (path.basename(file) === "icon.svg") hits.push(`brand: stand-in icon.svg present at ${LaunchCheck.rel(file)}`);
+    }
+    return hits;
+  }
+
+  static layoutIconsProblems(source) {
+    if (/^\s*icons\s*:/m.test(source)) return ["brand: layout metadata has an icons entry"];
+    return [];
+  }
+
+  static homeHeaderProblems(html, wordmark) {
+    const headers = [...String(html).matchAll(/<header\b[^>]*>[\s\S]*?<\/header>/gi)];
+    if (headers.length !== 1) return [`header: expected one <header>, found ${headers.length}`];
+    const header = headers[0][0];
+    const hits = [];
+    if (/<a\b/i.test(header)) hits.push("header: the header contains an <a>");
+    if (!header.includes('src="/brand/logo-64.webp"')) hits.push("header: the owl mark is missing");
+    if (!/\balt=""/.test(header)) hits.push('header: the mark alt is not ""');
+    if (!/\bwidth="32"/.test(header) || !/\bheight="32"/.test(header)) {
+      hits.push("header: the mark is missing explicit width and height");
+    }
+    if (wordmark && !header.includes(wordmark)) hits.push("header: the wordmark slot is missing");
+    if (/fetchpriority="high"/i.test(header)) hits.push("header: the mark sets fetchpriority high");
+    return hits;
+  }
+
+  static iconLinkProblems(html) {
+    const links = LaunchCheck.iconLinkTags(html);
+    const hits = [];
+    const ico = links.find((attrs) => attrs.rel === "icon" && LaunchCheck.iconHrefPath(attrs.href).endsWith("/favicon.ico"));
+    const png = links.find((attrs) => attrs.rel === "icon" && /\/icon[^/]*\.png$/.test(LaunchCheck.iconHrefPath(attrs.href)));
+    const apple = links.find(
+      (attrs) =>
+        attrs.rel === "apple-touch-icon" && /\/apple-icon[^/]*\.png$/.test(LaunchCheck.iconHrefPath(attrs.href)),
+    );
+    if (!ico) hits.push("brand: favicon.ico link is missing");
+    if (!png) hits.push("brand: icon.png link is missing");
+    else if (png.sizes !== "192x192") hits.push(`brand: icon.png sizes are ${png.sizes ?? "missing"}`);
+    if (!apple) hits.push("brand: apple-touch-icon link is missing");
+    else if (apple.sizes !== "180x180") hits.push(`brand: apple-touch-icon sizes are ${apple.sizes ?? "missing"}`);
+    for (const attrs of links) {
+      const href = LaunchCheck.iconHrefPath(attrs.href);
+      if (href.endsWith("/icon.svg") || href.endsWith("/apple-touch-icon.png")) {
+        hits.push(`brand: removed icon is still linked (${href})`);
+      }
+    }
+    if (/rel="preload"[^>]*\/brand\/logo-|\/brand\/logo-[^>]*rel="preload"/.test(html)) {
+      hits.push("brand: the header mark is preloaded");
+    }
+    return hits;
+  }
+
+  static sameIconLinks(home, notFound) {
+    const key = (attrs) => [attrs.rel, attrs.href, attrs.sizes ?? "", attrs.type ?? ""].join("|");
+    const homeKeys = LaunchCheck.iconLinkTags(home).map(key).sort();
+    const notFoundKeys = LaunchCheck.iconLinkTags(notFound).map(key).sort();
+    if (homeKeys.join("\n") !== notFoundKeys.join("\n")) return ["brand: 404 icon links differ from the home page"];
+    return [];
+  }
+
+  static removedIconReferences(dir) {
+    if (!fs.existsSync(dir)) return [];
+    const hits = [];
+    const extensions = new Set([".html", ".js", ".css", ".txt", ".xml", ".json"]);
+    for (const file of LaunchCheck.walk(dir, [], extensions)) {
+      const text = fs.readFileSync(file, "utf8");
+      if (text.includes("/icon.svg")) hits.push(`brand: ${LaunchCheck.rel(file)} references /icon.svg`);
+      if (text.includes("apple-touch-icon.png")) hits.push(`brand: ${LaunchCheck.rel(file)} references apple-touch-icon.png`);
+    }
+    return hits;
+  }
+
+  static async brand() {
+    const hits = [];
+    const layout = path.resolve("src/app/layout.tsx");
+    if (fs.existsSync(layout)) hits.push(...LaunchCheck.layoutIconsProblems(fs.readFileSync(layout, "utf8")));
+    for (const rel of ["public/icon.svg", "public/favicon.ico", "public/apple-touch-icon.png"]) {
+      if (fs.existsSync(path.resolve(rel))) hits.push(`brand: stand-in ${rel} is present`);
+    }
+    const out = path.resolve("out");
+    hits.push(...LaunchCheck.standInProblems(out));
+    hits.push(...LaunchCheck.standInProblems(path.resolve("public")));
+    if (!fs.existsSync(out)) return hits.concat(["brand: out/ is missing"]);
+    const hash = LaunchCheck.recordedMasterHash();
+    hits.push(...LaunchCheck.shippedMasterProblems(out, hash));
+    hits.push(...(await LaunchCheck.oversizedImageProblems(out)));
+    hits.push(...LaunchCheck.appleIconProblems(out));
+    const ico = path.join(out, "favicon.ico");
+    const icon = path.join(out, "icon.png");
+    const apple = path.join(out, "apple-icon.png");
+    if (!fs.existsSync(ico)) hits.push("brand: favicon.ico is missing");
+    else hits.push(...(await LaunchCheck.icoAlphaProblems(fs.readFileSync(ico), "favicon.ico")));
+    if (!fs.existsSync(icon)) hits.push("brand: icon.png is missing");
+    else {
+      const bytes = fs.readFileSync(icon);
+      const info = pngInfo(bytes);
+      hits.push(...LaunchCheck.iconAlphaProblems(bytes, "icon.png"));
+      if (info && (info.width !== 192 || info.height !== 192)) hits.push(`brand: icon.png is ${info.width}x${info.height}`);
+    }
+    if (fs.existsSync(apple)) {
+      const bytes = fs.readFileSync(apple);
+      const info = pngInfo(bytes);
+      hits.push(...LaunchCheck.iconAlphaProblems(bytes, "apple-icon.png"));
+      if (info && info.colorType !== 2) {
+        hits.push(`brand: apple-icon.png color type is ${info.colorType}, expected RGB`);
+      }
+      if (info && (info.width !== 180 || info.height !== 180)) {
+        hits.push(`brand: apple-icon.png is ${info.width}x${info.height}`);
+      }
+    }
+    const index = path.join(out, "index.html");
+    const notFound = path.join(out, "404.html");
+    if (!fs.existsSync(index)) hits.push("brand: out/index.html is missing");
+    else {
+      const html = fs.readFileSync(index, "utf8");
+      hits.push(...LaunchCheck.homeHeaderProblems(html, LaunchCheck.notFoundCopy()?.wordmark));
+      hits.push(...LaunchCheck.iconLinkProblems(html));
+      if (fs.existsSync(notFound)) {
+        hits.push(...LaunchCheck.sameIconLinks(html, fs.readFileSync(notFound, "utf8")));
+      }
+    }
+    hits.push(...LaunchCheck.removedIconReferences(out));
     return hits;
   }
 
@@ -652,6 +887,7 @@ export class LaunchCheck {
     for (const check of LaunchCheck.checks) problems.push(...check(roots));
     if (project) {
       problems.push(...LaunchCheck.projectGates());
+      problems.push(...(await LaunchCheck.brand()));
       problems.push(...(await CaptureGates.run()));
     }
     if (problems.length > 0) {

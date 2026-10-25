@@ -267,6 +267,98 @@ test("the runtime deferral leaves the static Umami script in the HTML", () => {
   );
 });
 
+test("the raw master in out/ fails the brand gate", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "brand-master-"));
+  const hash = LaunchCheck.recordedMasterHash();
+  assert.equal(hash, "1b986819db39800c86398e90a4bf2a4ddb05db936fb1a1e4e37699e398ef8d63");
+  fs.copyFileSync(path.resolve("src/assets/brand/lingumaster-logo-official.jpg"), path.join(dir, "renamed.jpg"));
+  const hits = LaunchCheck.shippedMasterProblems(dir, hash);
+  assert.equal(hits.length, 1);
+  assert.match(hits[0], /raw master shipped/);
+  assert.deepEqual(LaunchCheck.shippedMasterProblems(dir, "a".repeat(64)), []);
+});
+
+test("a favicon image with a transparent pixel fails the brand gate", async () => {
+  const sharp = (await import("sharp")).default;
+  const { writeIco } = await import("./generate-brand.mjs");
+  const png = await sharp({
+    create: { width: 16, height: 16, channels: 4, background: { r: 145, g: 175, b: 147, alpha: 0.2 } },
+  })
+    .png()
+    .toBuffer();
+  const ico = writeIco([
+    { width: 16, height: 16, png },
+    { width: 32, height: 32, png: await sharp(png).resize(32, 32).png().toBuffer() },
+    { width: 48, height: 48, png: await sharp(png).resize(48, 48).png().toBuffer() },
+  ]);
+  const hits = await LaunchCheck.icoAlphaProblems(ico, "favicon.ico");
+  assert.ok(hits.some((hit) => hit.includes("has alpha")));
+});
+
+test("an icon with alpha fails the brand gate", async () => {
+  const sharp = (await import("sharp")).default;
+  const png = await sharp({
+    create: { width: 2, height: 2, channels: 4, background: { r: 145, g: 175, b: 147, alpha: 0.4 } },
+  })
+    .png()
+    .toBuffer();
+  const hits = LaunchCheck.iconAlphaProblems(png, "icon.png");
+  assert.equal(hits.length, 1);
+  assert.match(hits[0], /icon\.png has alpha/);
+});
+
+test("a missing apple-icon fails the brand gate", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "brand-apple-"));
+  const hits = LaunchCheck.appleIconProblems(dir);
+  assert.deepEqual(hits, ["brand: apple-icon is missing"]);
+  fs.writeFileSync(path.join(dir, "apple-icon.png"), "png");
+  assert.deepEqual(LaunchCheck.appleIconProblems(dir), []);
+});
+
+test("a stand-in icon.svg fails the brand gate", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "brand-svg-"));
+  fs.writeFileSync(path.join(dir, "icon.svg"), "<svg></svg>");
+  const hits = LaunchCheck.standInProblems(dir);
+  assert.equal(hits.length, 1);
+  assert.match(hits[0], /stand-in icon\.svg/);
+  assert.deepEqual(LaunchCheck.standInProblems(fs.mkdtempSync(path.join(os.tmpdir(), "brand-empty-"))), []);
+});
+
+test("a header containing an anchor fails the brand gate", () => {
+  const wordmark = LaunchCheck.notFoundCopy().wordmark;
+  const linked = `<header><a href="/"><img src="/brand/logo-64.webp" alt="" width="32" height="32">${wordmark}</a></header>`;
+  const hits = LaunchCheck.homeHeaderProblems(linked, wordmark);
+  assert.deepEqual(hits, ["header: the header contains an <a>"]);
+  const plain = `<header><img src="/brand/logo-64.webp" alt="" width="32" height="32"><span>${wordmark}</span></header>`;
+  assert.deepEqual(LaunchCheck.homeHeaderProblems(plain, wordmark), []);
+});
+
+test("an image over 400px fails unless it is the OG or a capture", async () => {
+  const sharp = (await import("sharp")).default;
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "brand-large-"));
+  const png = await sharp({ create: { width: 401, height: 8, channels: 3, background: "#91af93" } }).png().toBuffer();
+  fs.writeFileSync(path.join(dir, "wide.png"), png);
+  fs.writeFileSync(path.join(dir, "og.png"), png);
+  fs.writeFileSync(path.join(dir, "hero-reader-401.png"), png);
+  const hits = await LaunchCheck.oversizedImageProblems(dir);
+  assert.deepEqual(hits, [`brand: ${path.relative(process.cwd(), path.join(dir, "wide.png"))} is 401x8`]);
+});
+
+test("the layout metadata has no icons entry and the CSP img-src is unchanged", () => {
+  const layout = fs.readFileSync(path.resolve("src/app/layout.tsx"), "utf8");
+  assert.deepEqual(LaunchCheck.layoutIconsProblems(layout), []);
+  assert.ok(LaunchCheck.layoutIconsProblems("export const metadata = {\n  icons: { icon: [] },\n};\n").length > 0);
+  const toml = fs.readFileSync(path.resolve("netlify.toml"), "utf8");
+  const doc = LaunchCheck.parseToml(toml);
+  const csp = String(doc.headers.find((header) => header.for === "/*")?.values?.["Content-Security-Policy"] ?? "");
+  assert.equal(csp, GOOD_CSP);
+  assert.equal(toml.includes('for = "/icon.svg"'), false);
+  assert.equal(toml.includes('for = "/apple-touch-icon.png"'), false);
+  assert.equal(fs.existsSync(path.resolve("public/icon.svg")), false);
+  assert.equal(fs.existsSync(path.resolve("public/favicon.ico")), false);
+  assert.equal(fs.existsSync(path.resolve("public/apple-touch-icon.png")), false);
+});
+
 test("one leftover data-placeholder fails check:launch", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "launch-placeholder-"));
   fs.writeFileSync(path.join(dir, "index.html"), '<main><svg data-placeholder="true"></svg></main>');

@@ -6,29 +6,42 @@
   background: var(--bg);
 }
 
-.wordmark {
-  display: inline-flex;
+.group {
+  display: flex;
   align-items: center;
-  min-height: 44px;
-  padding: 0 8px;
+  justify-content: center;
+  gap: 8px;
+}
+
+.mark {
+  display: block;
+  width: 32px;
+  height: 32px;
+  max-width: none;
+  aspect-ratio: 1;
+  flex: none;
+  border: 0;
+  border-radius: 50%;
+  box-shadow: none;
+  filter: none;
+  background: none;
+}
+
+.wordmark {
   color: var(--text);
   font-size: 17px;
   font-weight: 600;
   line-height: 24px;
   letter-spacing: -0.022em;
-  text-decoration: none;
-}
-
-.wordmark:link,
-.wordmark:visited,
-.wordmark:hover,
-.wordmark:active {
-  color: var(--text);
-  text-decoration: none;
 }
 
 @media (min-width: 1024px) {
   .bar {
     height: 64px;
+  }
+
+  .mark {
+    width: 40px;
+    height: 40px;
   }
 }

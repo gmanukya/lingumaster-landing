@@ -6,12 +6,12 @@
     "node": "22.23.4"
   },
   "scripts": {
-    "prebuild": "node scripts/check-badge.mjs && node scripts/generate-screens.mjs && node scripts/generate-og.mjs",
+    "prebuild": "node scripts/check-badge.mjs && node scripts/generate-screens.mjs && node scripts/generate-og.mjs && node scripts/generate-brand.mjs",
     "build": "NEXT_TELEMETRY_DISABLED=1 next build",
     "postbuild": "node scripts/defer-runtime.mjs",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "node --import ./scripts/register-ts.mjs --test src/lib/campaign.test.ts src/lib/analytics/analytics.test.ts src/content/draft-ribbon.test.ts scripts/launch-gates.test.mjs scripts/not-found-page.test.mjs",
+    "test": "node --import ./scripts/register-ts.mjs --test src/lib/campaign.test.ts src/lib/analytics/analytics.test.ts src/content/draft-ribbon.test.ts scripts/launch-gates.test.mjs scripts/not-found-page.test.mjs scripts/generate-brand.test.mjs",
     "analytics:mock": "node scripts/mock-collector.mjs",
     "check:badge": "node scripts/check-badge.mjs",
     "serve": "node scripts/serve.mjs",
