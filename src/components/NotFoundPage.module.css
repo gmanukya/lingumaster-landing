@@ -1,0 +1,93 @@
+.page {
+  padding-top: 96px;
+  padding-inline: 24px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.column {
+  width: 100%;
+  max-width: 342px;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.title {
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 40px;
+  letter-spacing: -0.032em;
+  text-wrap: balance;
+}
+
+.body {
+  margin-top: 16px;
+  color: var(--text-2);
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 24px;
+  letter-spacing: -0.012em;
+  text-wrap: pretty;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  margin-top: 32px;
+  padding-inline: 8px;
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 20px;
+  text-decoration: none;
+  transition: color 150ms;
+}
+
+.link:link,
+.link:visited {
+  color: var(--accent);
+}
+
+.link:hover,
+.link:focus,
+.link:focus-visible {
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+@media (min-width: 768px) {
+  .column {
+    max-width: 560px;
+  }
+
+  .title {
+    font-size: 48px;
+    line-height: 52px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .page {
+    padding-top: 160px;
+  }
+
+  .title {
+    font-size: 64px;
+    line-height: 68px;
+    letter-spacing: -0.04em;
+  }
+
+  .link {
+    font-size: 17px;
+    line-height: 24px;
+  }
+}

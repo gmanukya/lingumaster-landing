@@ -83,4 +83,9 @@ export const copy = {
     ogDescription:
       "Lis des histoires illustrées pour apprendre l’anglais et d’autres langues. L’app de @lingumaster.",
   },
+  notFound: {
+    title: "Cette page n’existe pas",
+    body: "Le lien est peut-être incorrect, ou la page a été déplacée. Reviens à l’accueil pour retrouver l’app.",
+    cta: "Retour à l’accueil",
+  },
 } as const;

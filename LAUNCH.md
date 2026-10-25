@@ -4,7 +4,10 @@ Human steps only. Agents do not buy the domain, touch Netlify, change DNS, deplo
 
 The build can be checked locally. `npm run check:launch` stays red until every gate in task (e) item 6 is true. Approved copy does not make the page launchable. The three cleaned captures are in the build and still provisional: `CAPTURES.md` has no Designer sign-off and no Gor approval, so each image carries `data-provisional="true"`. The OG image is the Designer file `src/assets/og/og-1200x630.png` (sha256 `69a74e43310f5346b0ccbeb100a3224ac8ce27931c62838596e0124f305e08ab`). The wordmark placeholder still fails `check:launch`.
 
-The 404 page still renders `[copy: notFound.title]` and `[copy: notFound.body]`. Those slots are not in the approved copy. The Writer supplies them. The gate fails on that HTML until then.
+The 404 page uses the French copy Gor approved on 24 Oct 2026, 23:11 WITA (`notFound.title`, `notFound.body`, `notFound.cta`). There is no 404 design in the visual spec. The layout follows Design D tokens and is provisional until the Designer signs off the title scale, the absence of the header wordmark, and the vertical position.
+
+- [ ] Designer: sign off the 404 layout.
+- [ ] Date and person:
 
 ## 0. Captures (D13 answered, D15 resolved)
 

@@ -97,6 +97,16 @@ Les alts décrivent ce qu’on voit, sans citer les libellés de l’interface e
 | Share card — titre (og:title) | Lingumaster : ton anglais, une histoire à la fois | 49/60 car |
 | Share card — description (og:description) | Lis des histoires illustrées pour apprendre l’anglais et d’autres langues. L’app de @lingumaster. | 97/110 car |
 
+## Page 404 (approuvé par Gor, 24 oct. 2026, 23:11 WITA)
+
+Une seule action : le lien vers l’accueil (la page avec le badge App Store). Tutoiement, sans prix, sans « essai », « gratuit » ni « IA », sans emoji.
+
+| Slot | Texte | Compte |
+|---|---|---|
+| notFound.title | Cette page n’existe pas | 4/8 mots |
+| notFound.body | Le lien est peut-être incorrect, ou la page a été déplacée. Reviens à l’accueil pour retrouver l’app. | 2 phrases, 17 mots |
+| notFound.cta (libellé du lien vers `/`) | Retour à l’accueil | 3 mots |
+
 ## Notes pour le design et l'intégration
 
 - **Aucun prix sur la page** (décision de Gor, 24 oct.) : ligne prix, microcopy du hero et prix de la meta description retirés. La meta garde « sur abonnement », qui est vrai et évite de laisser croire que l’app est gratuite. L’app est multilingue : H1 et meta title restent sur l’anglais (cible : francophones qui apprennent l’anglais), le reste dit « et d’autres langues ». Interface : si on la mentionne, écrire « interface en français ou en anglais ».

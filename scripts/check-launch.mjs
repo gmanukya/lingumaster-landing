@@ -407,6 +407,72 @@ export class LaunchCheck {
     return [];
   }
 
+  static notFoundCopy() {
+    const source = LaunchCheck.read("src/content/fr.ts");
+    const body = source.match(/export const copy = (\{[\s\S]*\}) as const;/);
+    if (!body) return null;
+    const copy = Function(`"use strict"; return (${body[1]});`)();
+    const group = copy.notFound;
+    if (!group || typeof group !== "object") return null;
+    const title = group.title;
+    const text = group.body;
+    const cta = group.cta;
+    if (typeof title !== "string" || typeof text !== "string" || typeof cta !== "string") return null;
+    if (!title || !text || !cta) return null;
+    return { title, body: text, cta };
+  }
+
+  static notFoundProblems(html, copy) {
+    const hits = [];
+    if (!copy) {
+      hits.push("404: notFound strings are missing from src/content/fr.ts");
+      return hits;
+    }
+    for (const [slot, value] of Object.entries(copy)) {
+      if (!html.includes(value)) hits.push(`404: missing notFound.${slot} from the content file`);
+    }
+    if (html.includes(LaunchCheck.copyMarker)) hits.push("404: contains [copy:");
+    if (html.includes("data-placeholder")) hits.push("404: contains data-placeholder");
+    if (html.includes("€")) hits.push("404: contains €");
+    const words = [
+      ["essai", /(?<![\p{L}\p{N}])essai(?![\p{L}\p{N}])/iu],
+      ["gratuit", /(?<![\p{L}\p{N}])gratuit(?![\p{L}\p{N}])/iu],
+      ["IA", /(?<![\p{L}\p{N}])IA(?![\p{L}\p{N}])/iu],
+    ];
+    for (const [label, pattern] of words) {
+      if (pattern.test(html)) hits.push(`404: contains ${label}`);
+    }
+    const visible = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
+    const anchors = visible.match(/<a\b[^>]*>/gi) ?? [];
+    if (anchors.length !== 1) hits.push(`404: expected one <a>, found ${anchors.length}`);
+    else if (!/\bhref="\/"/.test(anchors[0])) hits.push("404: the link does not point at /");
+    if ((visible.match(/<h1\b/gi) ?? []).length !== 1) hits.push("404: expected one h1");
+    if ((visible.match(/<p\b/gi) ?? []).length !== 1) hits.push("404: expected one paragraph");
+    if (/<header\b/i.test(visible)) hits.push("404: contains a header");
+    if (/<footer\b/i.test(visible)) hits.push("404: contains a footer");
+    if (!html.includes("noindex")) hits.push("404: missing noindex");
+    if (/rel=["']canonical["']/i.test(html)) hits.push('404: contains rel="canonical"');
+    if (/property=["']og:url["']/i.test(html)) hits.push("404: contains og:url");
+    if (/apple-itunes-app/i.test(html)) hits.push("404: contains an itunes smart banner");
+    if (/\p{Extended_Pictographic}/u.test(visible)) hits.push("404: contains an emoji");
+    return hits;
+  }
+
+  static notFound() {
+    const file = path.resolve("out/404.html");
+    if (!fs.existsSync(file)) return ["404: out/404.html is missing"];
+    const hits = LaunchCheck.notFoundProblems(
+      fs.readFileSync(file, "utf8"),
+      LaunchCheck.notFoundCopy(),
+    );
+    const sitemap = path.resolve("out/sitemap.xml");
+    if (fs.existsSync(sitemap)) {
+      const locs = [...fs.readFileSync(sitemap, "utf8").matchAll(/<loc>([^<]*)<\/loc>/g)].map((match) => match[1]);
+      if (locs.some((loc) => /404|not-found/i.test(loc))) hits.push("404: out/sitemap.xml has a 404 entry");
+    }
+    return hits;
+  }
+
   static projectGates() {
     return [
       LaunchCheck.copyStatus,
@@ -420,6 +486,7 @@ export class LaunchCheck {
       LaunchCheck.analytics,
       LaunchCheck.contact,
       LaunchCheck.badge,
+      LaunchCheck.notFound,
     ].flatMap((gate) => gate());
   }
 

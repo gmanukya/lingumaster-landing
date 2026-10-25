@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const SLOT_ORDER = {
   Header: ["wordmark"],
@@ -35,6 +36,7 @@ const SLOT_ORDER = {
     "meta.ogTitle",
     "meta.ogDescription",
   ],
+  "Page 404": ["notFound.title", "notFound.body", "notFound.cta"],
 };
 
 export class CopyDiff {
@@ -136,4 +138,5 @@ export class CopyDiff {
   }
 }
 
-CopyDiff.run();
+const invoked = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (invoked) CopyDiff.run();

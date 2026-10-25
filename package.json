@@ -11,7 +11,7 @@
     "postbuild": "node scripts/defer-runtime.mjs",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "node --import ./scripts/register-ts.mjs --test src/lib/campaign.test.ts src/lib/analytics/analytics.test.ts src/content/draft-ribbon.test.ts scripts/launch-gates.test.mjs",
+    "test": "node --import ./scripts/register-ts.mjs --test src/lib/campaign.test.ts src/lib/analytics/analytics.test.ts src/content/draft-ribbon.test.ts scripts/launch-gates.test.mjs scripts/not-found-page.test.mjs",
     "analytics:mock": "node scripts/mock-collector.mjs",
     "check:badge": "node scripts/check-badge.mjs",
     "serve": "node scripts/serve.mjs",
