@@ -5,9 +5,10 @@ import styles from "./NotFoundPage.module.css";
 
 /**
  * Designer sign-off on PR #7 was FIX. The block is centred, the wordmark is
- * plain text in the home header frame (not a link), the title uses the home
- * H1 size below 768 and 64/68 from 1024, and the link is 17 px with the
- * underline always on. The copy was already approved. Exactly one link, to /.
+ * plain text in the home header frame (not a link, and no owl mark), the title
+ * uses the home H1 size below 768 and 64/68 from 1024, and the link is 17 px
+ * with the underline always on. The copy was already approved. Exactly one
+ * link, to /. The favicon comes from the root layout.
  */
 export function NotFoundPage() {
   return (

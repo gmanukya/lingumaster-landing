@@ -79,6 +79,11 @@ test("a 404 document passes only when it matches the content file", () => {
     `<header><a href="/">${copy.wordmark}</a></header>`,
   );
   assert.ok(LaunchCheck.notFoundProblems(linkedMark, copy).some((hit) => hit.includes("wordmark is a link")));
+  const marked = page(copy).replace(
+    `<header><span>${copy.wordmark}</span></header>`,
+    `<header><img alt="" src="/brand/logo-64.webp"><span>${copy.wordmark}</span></header>`,
+  );
+  assert.ok(LaunchCheck.notFoundProblems(marked, copy).some((hit) => hit.includes("contains a mark")));
   const noHeader = page(copy).replace(`<header><span>${copy.wordmark}</span></header>`, "");
   assert.ok(LaunchCheck.notFoundProblems(noHeader, copy).some((hit) => hit.includes("expected one header")));
   assert.ok(LaunchCheck.notFoundProblems(page(copy, "<footer></footer>"), copy).some((hit) => hit.includes("footer")));

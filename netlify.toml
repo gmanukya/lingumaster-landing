@@ -50,18 +50,21 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-[[headers]]
-  for = "/apple-touch-icon.png"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/icon.svg"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
+# Icon file-convention URLs. favicon.ico is also requested with no hash, so it
+# stays short. /icon.png and /apple-icon.png are linked with a content hash
+# (see out/index.html); immutable applies to those hashed URLs.
 [[headers]]
   for = "/favicon.ico"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+[[headers]]
+  for = "/icon.png"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/apple-icon.png"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
