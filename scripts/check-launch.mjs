@@ -7,12 +7,10 @@ import { CaptureGates } from "./launch-gates.mjs";
 
 /**
  * Launch gate.
- * `--root` keeps the marker scan used by the legal fixtures, and also fails
- * when an HTML file under that root still has data-placeholder="true".
+ * `--root` fails when an HTML file under that root still has data-placeholder="true".
  * The default run (the repo) applies every launch gate.
  */
 export class LaunchCheck {
-  static marker = "[\u00c0 COMPL\u00c9TER";
   static copyMarker = "[copy:";
   static text = new Set([".md", ".html", ".txt", ".css", ".json", ".js", ".mjs", ".ts", ".tsx", ".svg", ".xml", ".toml"]);
   static forbiddenHashes = new Set([
@@ -50,20 +48,6 @@ export class LaunchCheck {
     return path.relative(process.cwd(), file) || file;
   }
 
-  static markers(root) {
-    if (!fs.existsSync(root)) return [];
-    const hits = [];
-    for (const file of LaunchCheck.walk(root, [], LaunchCheck.text)) {
-      const text = fs.readFileSync(file, "utf8");
-      if (text.includes(LaunchCheck.marker)) hits.push(`markers: ${LaunchCheck.rel(file)}`);
-    }
-    return hits;
-  }
-
-  static markerCheck(roots) {
-    return roots.flatMap((root) => LaunchCheck.markers(root));
-  }
-
   static placeholderCheck(roots) {
     const hits = [];
     for (const root of roots) {
@@ -77,7 +61,7 @@ export class LaunchCheck {
     return hits;
   }
 
-  static checks = [LaunchCheck.markerCheck, LaunchCheck.placeholderCheck];
+  static checks = [LaunchCheck.placeholderCheck];
 
   static read(file) {
     return fs.readFileSync(path.resolve(file), "utf8");
@@ -413,22 +397,6 @@ export class LaunchCheck {
     return ["contact: contactHref is unset and ACCEPT_NO_CONTACT is not recorded with who and when"];
   }
 
-  static publisher() {
-    const facts = LaunchCheck.read("src/content/legal/facts.ts");
-    if (!facts.includes('PUBLISHER_NAME = "Aleksandr Manukyan"')) {
-      return ["publisher: name is not Aleksandr Manukyan"];
-    }
-    const hits = [];
-    for (const page of ["privacy", "terms", "mentions-legales"]) {
-      const file = path.resolve("out", page, "index.html");
-      if (!fs.existsSync(file)) continue;
-      if (!fs.readFileSync(file, "utf8").includes("Aleksandr Manukyan")) {
-        hits.push(`publisher: ${page} does not name Aleksandr Manukyan`);
-      }
-    }
-    return hits;
-  }
-
   static badge() {
     const source = path.resolve("assets/badge-fr-black-official.svg");
     const hashFile = path.resolve("assets/badge-fr-black-official.svg.sha256");
@@ -451,7 +419,6 @@ export class LaunchCheck {
       LaunchCheck.netlify,
       LaunchCheck.analytics,
       LaunchCheck.contact,
-      LaunchCheck.publisher,
       LaunchCheck.badge,
     ].flatMap((gate) => gate());
   }

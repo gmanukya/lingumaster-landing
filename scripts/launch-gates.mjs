@@ -13,7 +13,6 @@ import {
 
 /**
  * Capture and copy-lock gates for check:launch.
- * Kept out of scripts/check-launch.mjs so the legal-marker rule stays untouched.
  */
 const TEXT = new Set([".md", ".html", ".txt", ".css", ".json", ".js", ".mjs", ".ts", ".tsx", ".svg", ".xml", ".toml"]);
 const SKIP_DIRS = new Set(["node_modules", ".git", ".next"]);

@@ -106,3 +106,14 @@ test("the Designer OG passes and the temporary wordmark fails", () => {
   assert.match(changedHit, /does not match/);
   assert.match(changedHit, new RegExp(designerHash));
 });
+
+test("one leftover data-placeholder fails check:launch", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "launch-placeholder-"));
+  fs.writeFileSync(path.join(dir, "index.html"), '<main><svg data-placeholder="true"></svg></main>');
+  const result = spawnSync(process.execPath, ["scripts/check-launch.mjs", "--root", dir], {
+    encoding: "utf8",
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /data-placeholder="true"/);
+  assert.match(result.stderr, /index\.html/);
+});
