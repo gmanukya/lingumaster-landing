@@ -417,9 +417,11 @@ export class LaunchCheck {
     const title = group.title;
     const text = group.body;
     const cta = group.cta;
+    const wordmark = copy.wordmark;
     if (typeof title !== "string" || typeof text !== "string" || typeof cta !== "string") return null;
+    if (typeof wordmark !== "string" || !wordmark) return null;
     if (!title || !text || !cta) return null;
-    return { title, body: text, cta };
+    return { title, body: text, cta, wordmark };
   }
 
   static notFoundProblems(html, copy) {
@@ -428,8 +430,8 @@ export class LaunchCheck {
       hits.push("404: notFound strings are missing from src/content/fr.ts");
       return hits;
     }
-    for (const [slot, value] of Object.entries(copy)) {
-      if (!html.includes(value)) hits.push(`404: missing notFound.${slot} from the content file`);
+    for (const slot of ["title", "body", "cta"]) {
+      if (!html.includes(copy[slot])) hits.push(`404: missing notFound.${slot} from the content file`);
     }
     if (html.includes(LaunchCheck.copyMarker)) hits.push("404: contains [copy:");
     if (html.includes("data-placeholder")) hits.push("404: contains data-placeholder");
@@ -448,8 +450,17 @@ export class LaunchCheck {
     else if (!/\bhref="\/"/.test(anchors[0])) hits.push("404: the link does not point at /");
     if ((visible.match(/<h1\b/gi) ?? []).length !== 1) hits.push("404: expected one h1");
     if ((visible.match(/<p\b/gi) ?? []).length !== 1) hits.push("404: expected one paragraph");
-    if (/<header\b/i.test(visible)) hits.push("404: contains a header");
+    const headers = [...visible.matchAll(/<header\b[^>]*>[\s\S]*?<\/header>/gi)];
+    if (headers.length !== 1) hits.push(`404: expected one header, found ${headers.length}`);
+    else {
+      const header = headers[0][0];
+      if (/<a\b/i.test(header)) hits.push("404: the header wordmark is a link");
+      if (!header.includes(copy.wordmark)) hits.push("404: the header is missing the wordmark");
+    }
     if (/<footer\b/i.test(visible)) hits.push("404: contains a footer");
+    if (/apps\.apple\.com|badge-fr|data-placement|Apple Inc\./i.test(visible)) {
+      hits.push("404: contains a badge or the Apple credit");
+    }
     if (!html.includes("noindex")) hits.push("404: missing noindex");
     if (/rel=["']canonical["']/i.test(html)) hits.push('404: contains rel="canonical"');
     if (/property=["']og:url["']/i.test(html)) hits.push("404: contains og:url");

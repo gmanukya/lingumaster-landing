@@ -8,7 +8,7 @@ import { CopyDiff } from "./diff-copy.mjs";
 const slots = ["notFound.title", "notFound.body", "notFound.cta"];
 
 function page(copy, extra = "") {
-  return `<!doctype html><html lang="fr"><head><title>${copy.title}</title><meta name="robots" content="noindex"></head><body><main><h1>${copy.title}</h1><p>${copy.body}</p><a href="/">${copy.cta}</a></main>${extra}</body></html>`;
+  return `<!doctype html><html lang="fr"><head><title>${copy.title}</title><meta name="robots" content="noindex"></head><body><header><span>${copy.wordmark}</span></header><main><h1>${copy.title}</h1><p>${copy.body}</p><a href="/">${copy.cta}</a></main>${extra}</body></html>`;
 }
 
 test("the 404 slots in fr.ts match the copy file", () => {
@@ -69,8 +69,24 @@ test("a 404 document passes only when it matches the content file", () => {
 
   const indexed = page(copy).replace('content="noindex"', 'content="index"');
   assert.ok(LaunchCheck.notFoundProblems(indexed, copy).some((hit) => hit.includes("noindex")));
-  assert.ok(LaunchCheck.notFoundProblems(page(copy, "<header></header>"), copy).some((hit) => hit.includes("header")));
+  assert.ok(
+    LaunchCheck.notFoundProblems(page(copy, "<header><span>x</span></header>"), copy).some((hit) =>
+      hit.includes("expected one header"),
+    ),
+  );
+  const linkedMark = page(copy).replace(
+    `<header><span>${copy.wordmark}</span></header>`,
+    `<header><a href="/">${copy.wordmark}</a></header>`,
+  );
+  assert.ok(LaunchCheck.notFoundProblems(linkedMark, copy).some((hit) => hit.includes("wordmark is a link")));
+  const noHeader = page(copy).replace(`<header><span>${copy.wordmark}</span></header>`, "");
+  assert.ok(LaunchCheck.notFoundProblems(noHeader, copy).some((hit) => hit.includes("expected one header")));
   assert.ok(LaunchCheck.notFoundProblems(page(copy, "<footer></footer>"), copy).some((hit) => hit.includes("footer")));
+  assert.ok(
+    LaunchCheck.notFoundProblems(page(copy, '<img src="/assets/badge-fr-black-official.svg" alt="">'), copy).some(
+      (hit) => hit.includes("badge"),
+    ),
+  );
 });
 
 test("built out/404.html matches the content file", (t) => {

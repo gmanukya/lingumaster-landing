@@ -1,22 +1,36 @@
 .page {
-  padding-top: 96px;
-  padding-inline: 24px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
   background: var(--bg);
   color: var(--text);
+}
+
+.page > header {
+  flex-shrink: 0;
+}
+
+.main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 12svh;
+  padding-inline: 24px;
 }
 
 .column {
   width: 100%;
   max-width: 342px;
-  margin-inline: auto;
   text-align: center;
 }
 
 .title {
-  font-size: 36px;
+  font-size: clamp(40px, 11.3vw, 44px);
   font-weight: 600;
-  line-height: 40px;
-  letter-spacing: -0.032em;
+  line-height: 48px;
+  letter-spacing: -0.036em;
   text-wrap: balance;
 }
 
@@ -38,21 +52,20 @@
   margin-top: 32px;
   padding-inline: 8px;
   color: var(--accent);
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 600;
-  line-height: 20px;
-  text-decoration: none;
-  transition: color 150ms;
+  line-height: 24px;
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
 }
 
 .link:link,
-.link:visited {
-  color: var(--accent);
-}
-
+.link:visited,
 .link:hover,
 .link:focus,
-.link:focus-visible {
+.link:active {
+  color: var(--accent);
   text-decoration-line: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 4px;
@@ -72,22 +85,14 @@
   .title {
     font-size: 48px;
     line-height: 52px;
+    letter-spacing: -0.032em;
   }
 }
 
 @media (min-width: 1024px) {
-  .page {
-    padding-top: 160px;
-  }
-
   .title {
     font-size: 64px;
     line-height: 68px;
     letter-spacing: -0.04em;
-  }
-
-  .link {
-    font-size: 17px;
-    line-height: 24px;
   }
 }
