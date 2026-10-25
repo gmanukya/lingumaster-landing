@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { DraftRibbon } from "@/components/DraftRibbon";
 import { Copy } from "@/content/Copy";
+import { UmamiScript } from "@/lib/analytics/UmamiScript";
 import { campaignInlineScript } from "@/lib/campaign";
 import { blockIndexing } from "@/lib/indexing";
 import { SITE_URL } from "@/lib/site";
@@ -59,6 +60,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
         <DraftRibbon />
         {children}
+        <UmamiScript />
       </body>
     </html>
   );

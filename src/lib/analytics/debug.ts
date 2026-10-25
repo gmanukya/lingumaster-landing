@@ -9,7 +9,7 @@ import type { AnalyticsAdapter, Event } from "./types";
  * payload is handed to navigator.sendBeacon (fetch keepalive if the
  * browser cannot queue the beacon). This is the dev collector path.
  * It stays inert unless debug is the selected adapter.
- * counter / plausible / umami are not this adapter.
+ * The production umami adapter is a separate module.
  */
 export const debugAdapter: AnalyticsAdapter = {
   send(event: Event): void {

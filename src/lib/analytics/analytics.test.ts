@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import fs from "node:fs";
+import path from "node:path";
+import test, { mock } from "node:test";
 import { debugAdapter } from "./debug";
 import { badgeTapEvent, viewEvent } from "./events";
 import { noopAdapter } from "./noop";
@@ -7,12 +9,15 @@ import { allowlist, serialize } from "./payload";
 import { ADAPTER_NAMES, selectAdapter } from "./registry";
 import { readPlacement, sendBadgeTap } from "./track";
 import type { Event } from "./types";
+import { isUmamiWebsiteId, UMAMI_DOMAINS, umamiAdapter, umamiConfig } from "./umami";
+
+const EXAMPLE_WEBSITE_ID = "50533390-5f46-4f32-b670-f4a9db0627ca";
 
 const VIEW = { name: "view", src: "tiktok_bio" } as const;
 const TAP = { name: "badge_tap", src: "landing_direct", placement: "final" } as const;
 
-test("the adapter names are the env var values, and only noop and debug are built", () => {
-  assert.deepEqual(ADAPTER_NAMES, ["noop", "debug", "counter", "plausible", "umami"]);
+test("the adapter names are noop, debug and umami, and umami stays noop without a UUID", () => {
+  assert.deepEqual(ADAPTER_NAMES, ["noop", "debug", "umami"]);
   assert.equal(selectAdapter(undefined), noopAdapter);
   assert.equal(selectAdapter("noop"), noopAdapter);
   assert.equal(selectAdapter(""), noopAdapter);
@@ -321,6 +326,190 @@ test("badge taps read hero and final from data-placement and ignore anything els
   assert.equal(readPlacement(null), null);
   assert.doesNotThrow(() => sendBadgeTap(null));
   assert.doesNotThrow(() => sendBadgeTap(slot(null) as unknown as EventTarget));
+});
+
+test("umami is selected only when the public env var is umami and the website id is a UUID", () => {
+  const previousAnalytics = process.env.NEXT_PUBLIC_ANALYTICS;
+  const previousId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID;
+  const previousDomains = process.env.NEXT_PUBLIC_UMAMI_DOMAINS;
+  try {
+    delete process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID;
+    delete process.env.NEXT_PUBLIC_UMAMI_DOMAINS;
+    process.env.NEXT_PUBLIC_ANALYTICS = "umami";
+    assert.equal(umamiConfig(), null);
+    assert.equal(selectAdapter("umami"), noopAdapter);
+
+    process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID = "not-a-uuid";
+    assert.equal(isUmamiWebsiteId(process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID), false);
+    assert.equal(selectAdapter("umami"), noopAdapter);
+
+    process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID = EXAMPLE_WEBSITE_ID;
+    assert.equal(selectAdapter("umami"), umamiAdapter);
+    assert.deepEqual(umamiConfig(), { websiteId: EXAMPLE_WEBSITE_ID, domains: UMAMI_DOMAINS });
+
+    process.env.NEXT_PUBLIC_UMAMI_DOMAINS = "preview.example";
+    assert.equal(umamiConfig()?.domains, "preview.example");
+
+    process.env.NEXT_PUBLIC_ANALYTICS = "noop";
+    assert.equal(selectAdapter("umami"), noopAdapter);
+    assert.equal(umamiConfig(), null);
+  } finally {
+    restoreEnv("NEXT_PUBLIC_ANALYTICS", previousAnalytics);
+    restoreEnv("NEXT_PUBLIC_UMAMI_WEBSITE_ID", previousId);
+    restoreEnv("NEXT_PUBLIC_UMAMI_DOMAINS", previousDomains);
+  }
+});
+
+test("badge_tap sends only src and placement, and view uses the normalised url", () => {
+  const previousAnalytics = process.env.NEXT_PUBLIC_ANALYTICS;
+  const previousId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID;
+  process.env.NEXT_PUBLIC_ANALYTICS = "umami";
+  process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID = EXAMPLE_WEBSITE_ID;
+  const calls: unknown[][] = [];
+  const previousUmami = (globalThis as { umami?: unknown }).umami;
+  (globalThis as { umami?: { track: (...args: unknown[]) => void } }).umami = {
+    track(...args: unknown[]) {
+      calls.push(args);
+    },
+  };
+  try {
+    umamiAdapter.send({
+      name: "badge_tap",
+      src: "tiktok_bio",
+      placement: "hero",
+      href: "https://apps.apple.com/fr/app/id6504011014",
+      id: "user-1",
+    } as Event);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0]?.[0], "badge_tap");
+    assert.deepEqual(calls[0]?.[1], { src: "tiktok_bio", placement: "hero" });
+    assert.deepEqual(Object.keys(calls[0]?.[1] as object), ["src", "placement"]);
+
+    umamiAdapter.send(viewEvent("?src=evil"));
+    const view = calls[1]?.[0];
+    assert.equal(typeof view, "function");
+    const props = (view as (value: Record<string, unknown>) => Record<string, unknown>)({
+      website: EXAMPLE_WEBSITE_ID,
+      url: "/?src=evil",
+      hostname: "lingumaster.app",
+    });
+    assert.equal(props.url, "/");
+    assert.equal(props.website, EXAMPLE_WEBSITE_ID);
+    assert.equal("name" in props, false);
+
+    umamiAdapter.send({ name: "view", src: "tiktok_bio" });
+    const tiktok = calls[2]?.[0] as (value: Record<string, unknown>) => Record<string, unknown>;
+    assert.equal(tiktok({ url: "/" }).url, "/?src=tiktok_bio");
+
+    umamiAdapter.send({ name: "view", src: "evil" } as unknown as Event);
+    umamiAdapter.send({ name: "badge_tap", src: "tiktok_bio" } as Event);
+    assert.equal(calls.length, 3);
+  } finally {
+    if (previousUmami === undefined) delete (globalThis as { umami?: unknown }).umami;
+    else (globalThis as { umami?: unknown }).umami = previousUmami;
+    restoreEnv("NEXT_PUBLIC_ANALYTICS", previousAnalytics);
+    restoreEnv("NEXT_PUBLIC_UMAMI_WEBSITE_ID", previousId);
+  }
+});
+
+test("a missing window.umami retries three times, 500 ms apart, then drops", () => {
+  mock.timers.enable({ apis: ["setTimeout"] });
+  const previousAnalytics = process.env.NEXT_PUBLIC_ANALYTICS;
+  const previousId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID;
+  process.env.NEXT_PUBLIC_ANALYTICS = "umami";
+  process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID = EXAMPLE_WEBSITE_ID;
+  delete (globalThis as { umami?: unknown }).umami;
+  const calls: string[] = [];
+  try {
+    const started = Date.now();
+    assert.doesNotThrow(() => umamiAdapter.send({ name: "view", src: "landing_direct" }));
+    assert.equal(Date.now() - started < 50, true);
+    assert.equal(calls.length, 0);
+    mock.timers.tick(500);
+    mock.timers.tick(500);
+    (globalThis as { umami?: { track: () => void } }).umami = {
+      track() {
+        calls.push("late");
+      },
+    };
+    mock.timers.tick(500);
+    assert.deepEqual(calls, ["late"]);
+    mock.timers.tick(5000);
+    assert.deepEqual(calls, ["late"]);
+
+    delete (globalThis as { umami?: unknown }).umami;
+    calls.length = 0;
+    umamiAdapter.send({ name: "badge_tap", src: "landing_direct", placement: "final" });
+    mock.timers.tick(500);
+    mock.timers.tick(500);
+    mock.timers.tick(500);
+    (globalThis as { umami?: { track: () => void } }).umami = {
+      track() {
+        calls.push("too-late");
+      },
+    };
+    mock.timers.tick(5000);
+    assert.deepEqual(calls, []);
+  } finally {
+    delete (globalThis as { umami?: unknown }).umami;
+    mock.timers.reset();
+    restoreEnv("NEXT_PUBLIC_ANALYTICS", previousAnalytics);
+    restoreEnv("NEXT_PUBLIC_UMAMI_WEBSITE_ID", previousId);
+  }
+});
+
+test("umami send stays quiet when the id is missing and never calls fetch", () => {
+  const calls = networkStub();
+  const previousAnalytics = process.env.NEXT_PUBLIC_ANALYTICS;
+  const previousId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID;
+  delete process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID;
+  process.env.NEXT_PUBLIC_ANALYTICS = "umami";
+  let tracked = 0;
+  (globalThis as { umami?: { track: () => void } }).umami = {
+    track() {
+      tracked += 1;
+    },
+  };
+  try {
+    assert.doesNotThrow(() => umamiAdapter.send(VIEW));
+    assert.equal(tracked, 0);
+    assert.deepEqual(calls.beacons, []);
+    assert.deepEqual(calls.fetches, []);
+    (globalThis as { umami?: { track: () => never } }).umami = {
+      track() {
+        throw new Error("tracker failed");
+      },
+    };
+    process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID = EXAMPLE_WEBSITE_ID;
+    assert.doesNotThrow(() => umamiAdapter.send(TAP));
+  } finally {
+    delete (globalThis as { umami?: unknown }).umami;
+    restoreEnv("NEXT_PUBLIC_ANALYTICS", previousAnalytics);
+    restoreEnv("NEXT_PUBLIC_UMAMI_WEBSITE_ID", previousId);
+    calls.restore();
+  }
+});
+
+test("the page does not use data-umami-event, and the 404 page does not mount Analytics", () => {
+  const root = path.resolve("src");
+  const files: string[] = [];
+  const walk = (dir: string) => {
+    for (const name of fs.readdirSync(dir)) {
+      const full = path.join(dir, name);
+      if (fs.statSync(full).isDirectory()) walk(full);
+      else if (/\.(ts|tsx|css)$/.test(name) && !name.endsWith(".test.ts")) files.push(full);
+    }
+  };
+  walk(root);
+  const offenders = files.filter((file) => fs.readFileSync(file, "utf8").includes("data-umami-event"));
+  assert.deepEqual(offenders, []);
+  assert.equal(fs.readFileSync(path.resolve("src/app/page.tsx"), "utf8").includes("Analytics"), true);
+  assert.equal(fs.readFileSync(path.resolve("src/app/not-found.tsx"), "utf8").includes("Analytics"), false);
+  assert.equal(fs.readFileSync(path.resolve("src/components/NotFoundPage.tsx"), "utf8").includes("Analytics"), false);
+  const adapter = fs.readFileSync(path.resolve("src/lib/analytics/umami.ts"), "utf8");
+  assert.equal(adapter.includes("cloud.umami.is"), false);
+  assert.equal(adapter.includes("gateway.umami.is"), false);
+  assert.equal(adapter.includes(EXAMPLE_WEBSITE_ID), false);
 });
 
 function slot(placement: string | null) {

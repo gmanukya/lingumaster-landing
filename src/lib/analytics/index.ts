@@ -6,3 +6,4 @@ export { ADAPTER_NAMES, selectAdapter } from "./registry";
 export type { AdapterName } from "./registry";
 export { readPlacement, sendBadgeTap, sendView } from "./track";
 export type { AnalyticsAdapter, Event } from "./types";
+export { isUmamiWebsiteId, umamiAdapter, umamiConfig } from "./umami";
